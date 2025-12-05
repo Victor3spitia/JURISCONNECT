@@ -21,16 +21,6 @@ const cancelEditBtn = document.getElementById("cancelEditBtn");
 
 /* ========= ALERTAS PERSONALIZADAS (VERSIÓN MEJORADA) ========= */
 
-/**
- * Función principal para mostrar alertas personalizadas
- * @param {string} type - Tipo de alerta: 'success', 'error', 'warning', 'info'
- * @param {string} title - Título de la alerta
- * @param {string} message - Mensaje de la alerta
- * @param {boolean} showCancel - Mostrar botón de cancelar
- * @param {string} confirmText - Texto del botón de confirmación
- * @param {string} cancelText - Texto del botón de cancelar
- * @returns {Promise<boolean>} - Retorna true si confirma, false si cancela
- */
 function showCustomAlert(
     type,
     title = "",
@@ -151,13 +141,7 @@ function showCustomAlert(
     });
 }
 
-/**
- * Función simplificada para mostrar alertas (compatible con código antiguo)
- * @param {string} type - Tipo de alerta
- * @param {string} title - Título
- * @param {string} message - Mensaje
- * @param {string|null} buttons - HTML de botones personalizados (opcional)
- */
+
 function showAlert(type, title, message, buttons = null) {
     // Si se proporcionan botones personalizados, usar la versión antigua
     if (buttons) {
@@ -1133,57 +1117,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // clic en la tarjeta de abogados
     lawyersCard.addEventListener("click", () => {
-        // cerrar la otra
         if (assistantsWrapper.style.display === "block") {
             slideToggle(assistantsWrapper);
         }
-        // abrir/cerrar esta
         slideToggle(lawyersWrapper);
     });
 
     // clic en la tarjeta de asistentes
     assistantsCard.addEventListener("click", () => {
-        // cerrar la otra
         if (lawyersWrapper.style.display === "block") {
             slideToggle(lawyersWrapper);
         }
-        // abrir/cerrar esta
         slideToggle(assistantsWrapper);
     });
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    const lawyerContainer = document.getElementById("lawyerSelectContainer");
-    const lawyerList = document.getElementById("lawyerList");
-    const addLawyerBtn = document.getElementById("addLawyerBtn");
-
-    const lawyerTemplate = document.querySelector(".lawyer-select");
-
-    function addLawyerSelect() {
-        const wrapper = document.createElement("div");
-        wrapper.style.display = "flex";
-        wrapper.style.gap = "10px";
-        wrapper.style.marginBottom = "8px";
-
-        const newSelect = lawyerTemplate.cloneNode(true);
-        newSelect.style.display = "block";
-        newSelect.name = "lawyers[]";
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.type = "button";
-        deleteBtn.textContent = "Eliminar";
-        deleteBtn.classList.add("btn-cancel");
-
-        deleteBtn.addEventListener("click", () => wrapper.remove());
-
-        wrapper.appendChild(newSelect);
-        wrapper.appendChild(deleteBtn);
-
-        lawyerList.appendChild(wrapper);
-    }
-
-    addLawyerBtn.addEventListener("click", addLawyerSelect);
 });
 
 
@@ -1216,14 +1162,15 @@ if (btnCancelAsistente) {
 
 document.addEventListener("click", function (e) {
 
-    // EDITAR ASISTENTE
+    /* =============================
+       =    EDITAR ASISTENTE       =
+       ============================= */
     if (e.target.classList.contains("btn-edit-assistant")) {
 
         const btn = e.target;
-
         const id = btn.dataset.id;
 
-        // Llenar campos
+        // Llenar campos del formulario
         editAssistantNombre.value = btn.dataset.nombre;
         editAssistantApellido.value = btn.dataset.apellido;
         editAssistantTipoDocumento.value = btn.dataset.tipo_documento;
@@ -1231,91 +1178,97 @@ document.addEventListener("click", function (e) {
         editAssistantCorreo.value = btn.dataset.correo;
         editAssistantTelefono.value = btn.dataset.telefono || '';
 
-        // Ruta del formulario
+        // Ruta
         editAssistantForm.action = `/assistants/${id}`;
-
-        // Cargar abogados asignados
-        const container = document.getElementById("assignedLawyersContainer");
-        container.innerHTML = '';
-
-        let lawyers = JSON.parse(btn.dataset.lawyers || '[]');
-
-        lawyers.forEach(lawyerId => {
-            addLawyerSelect(lawyerId);
-        });
 
         // Mostrar modal
         editAssistantModal.style.display = "flex";
     }
 
-    // CERRAR MODAL
+    /* =============================
+       =       CERRAR MODAL        =
+       ============================= */
     if (e.target.id === "closeEditAssistantModal" || e.target.id === "cancelEditBtn") {
         editAssistantModal.style.display = "none";
     }
-
-    // AGREGA SELECT DE ABOGADO
-    if (e.target.id === "addLawyerBtn") {
-        addLawyerSelect();
-    }
-
 });
 
-// Función para crear select abogado
-function addLawyerSelect(selectedId = null) {
+/* ===========================================
+   =   FUNCIÓN AGREGAR SELECT DE ABOGADO (EDITAR)     =
+   =========================================== */
+function addLawyerSelectEdit(selectedId = null) {
 
     const baseSelect = document.querySelector(".lawyer-select");
     const container = document.getElementById("assignedLawyersContainer");
 
+    // Clonar select
     const select = baseSelect.cloneNode(true);
     select.style.display = "block";
+    select.style.flex = "1";
     select.name = "lawyers[]";
 
-    if (selectedId) {
-        select.value = selectedId;
-    }
+    if (selectedId) select.value = selectedId;
 
-    // Botón eliminar abogado
+    // Contenedor de cada fila
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("lawyer-wrapper");
+    wrapper.style.display = "flex";
+    wrapper.style.alignItems = "center";
+    wrapper.style.gap = "10px";
+    wrapper.style.marginBottom = "10px";
+
+    // Botón eliminar
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
     removeBtn.textContent = "Eliminar";
-    removeBtn.onclick = () => {
-        select.parentElement.remove();
-    };
+    removeBtn.classList.add("remove-lawyer", "btn-cancel");
 
-    const wrapper = document.createElement("div");
+    // Añadir
     wrapper.appendChild(select);
     wrapper.appendChild(removeBtn);
-
     container.appendChild(wrapper);
 }
 
+
+/* ===========================================
+   =    ENVÍO AJAX DEL FORMULARIO UPDATE      =
+   =========================================== */
 document.querySelector('#form-update').addEventListener('submit', function (e) {
-    e.preventDefault(); // evitar que el formulario recargue la página
+    e.preventDefault();
 
-    let formData = new FormData(this);
+    let form = this;
+    let formData = new FormData(form);
 
-    fetch(this.action, {
+    fetch(form.action, {
         method: 'POST',
-        body: formData,
+        body: formData, // No agregar headers de tipo JSON !
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
         .then(res => res.json())
         .then(data => {
+
             if (data.success) {
-                // Mensaje pequeño tipo notificación
+
                 const msg = document.createElement('div');
                 msg.innerText = data.message;
-                msg.classList.add('notification-success'); // puedes darle estilo en CSS
+                msg.classList.add('notification-success');
+
                 document.body.appendChild(msg);
-                setTimeout(() => msg.remove(), 2000); // se elimina solo después de 2s
+
+                setTimeout(() => msg.remove(), 2000);
+
+                editAssistantModal.style.display = "none";
+
             } else {
                 alert('Error: ' + data.message);
             }
+
         })
-        .catch(err => console.log(err));
+        .catch(err => console.error(err));
 });
+
 
 
 
