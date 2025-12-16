@@ -160,17 +160,13 @@
         <div class="modal" id="editLawyerModal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>Editar Abogada</h2>
+                    <h2>Editar Abogado</h2>
                     <button class="modal-close" id="closeEditModal">&times;</button>
                 </div>
 
                 <div class="modal-body">
                     <form id="editLawyerForm" method="POST" action="#">
                         @csrf
-                        <div class="form-group">
-                            <label for="editNombre">Nombre:</label>
-                            <input type="text" id="editNombre" name="nombre" required>
-                        </div>
 
                         <div class="form-group">
                             <label for="editipodeusuario">Usuario:</label>
@@ -178,6 +174,11 @@
                                 <option value="assistant">Asistente Juridico</option>
                                 <option value="lawyer">Abogado</option>
                             </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editNombre">Nombre:</label>
+                            <input type="text" id="editNombre" name="nombre" required>
                         </div>
 
                         <div class="form-group">

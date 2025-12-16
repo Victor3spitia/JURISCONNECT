@@ -1,5 +1,5 @@
 /**
- * Módulo de UI: modales, sidebar, tablas, imagen
+ * Módulo de Interfas de Usuario: modales, sidebar, tablas, imagen
  */
 
 import { showCustomAlert } from "./alerts.js";

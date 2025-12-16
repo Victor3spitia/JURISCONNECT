@@ -1219,44 +1219,93 @@ if (btnCancelAsistente) {
 /* =============================
    =    EDITAR ASISTENTE
    ============================= */
-document.addEventListener("click", function (e) {
-    if (e.target.classList.contains("btn-edit-assistant")) {
-        const btn = e.target;
-        const id = btn.dataset.id;
+const editAssistantForm = document.getElementById("editAssistantForm");
+    if (editAssistantForm) {
+        editAssistantForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = new FormData(form);
+            const assistantId = form.action.split("/").pop();
 
-        editAssistantNombre.value = btn.dataset.nombre || "";
-        editAssistantApellido.value = btn.dataset.apellido || "";
-        editAssistantTipoDocumento.value = btn.dataset.tipo_documento || "";
-        editAssistantNumeroDocumento.value = btn.dataset.numero_documento || "";
-        editAssistantCorreo.value = btn.dataset.correo || "";
-        editAssistantTelefono.value = btn.dataset.telefono || "";
+            const validationErrors = validateEditAssistantForm(data);
+            if (validationErrors.length > 0) {
+                await showCustomAlert(
+                    "warning",
+                    "Campos Incompletos",
+                    validationErrors.join("\n")
+                );
+                return;
+            }
 
-        editAssistantForm.action = `/assistants/${id}`;
+            const hasDuplicates = await checkAssistantDuplicates(data, assistantId);
+            if (hasDuplicates) return;
 
-        const container = document.getElementById("assignedLawyersContainer");
-        container.innerHTML = "";
+            try {
+                const csrf = getCsrfToken();
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": csrf,
+                    },
+                    body: data,
+                });
 
-        const lawyers = JSON.parse(btn.dataset.lawyers || "[]");
-        lawyers.forEach((lawyerId) => addLawyerSelect(lawyerId));
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    const updatedAssistant = {
+                        nombre: data.get("nombre"),
+                        apellido: data.get("apellido"),
+                        tipo_documento: data.get("tipo_documento"),
+                        numero_documento: data.get("numero_documento"),
+                        correo: data.get("correo"),
+                        telefono: data.get("telefono"),
+                    };
 
-        editAssistantModal.style.display = "flex";
+                    updateAssistantRowInTable(assistantId, updatedAssistant);
+                    
+                    await showCustomAlert(
+                        "success",
+                        "¡Perfecto!",
+                        `El asistente ${updatedAssistant.nombre} ${updatedAssistant.apellido} ha sido actualizado exitosamente.`
+                    );
+                    
+                    // Cerrar modal
+                    const editModal = document.getElementById("editAssistantModal");
+                    if (editModal) {
+                        editModal.style.display = "none";
+                        document.body.style.overflow = "auto";
+                    }
+                    
+                    // Opcional: recargar para actualizar la lista de abogados asignados
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    const error = await response.json();
+                    const handled = await handleDuplicateError(
+                        error,
+                        response.status,
+                        "edit"
+                    );
+                    if (!handled)
+                        await showCustomAlert(
+                            "error",
+                            "Error de Actualización",
+                            "Error al actualizar: " +
+                                (error.message ||
+                                    "Verifica que todos los campos estén correctos.")
+                        );
+                }
+            } catch (err) {
+                console.error(err);
+                await showCustomAlert(
+                    "error",
+                    "Error Inesperado",
+                    "Ocurrió un error inesperado. Inténtalo de nuevo."
+                );
+            }
+        });
     }
 
-    if (
-        e.target.id === "closeEditAssistantModal" ||
-        e.target.id === "cancelEditBtn"
-    ) {
-        editAssistantModal.style.display = "none";
-    }
-
-    if (e.target.id === "addLawyerBtn") {
-        addLawyerSelect();
-    }
-
-    if (e.target.classList.contains("remove-lawyer")) {
-        e.target.parentElement.remove();
-    }
-});
 
 /* ===========================================
    =   AGREGAR SELECT DE ABOGADO
@@ -1394,7 +1443,7 @@ function updateAssistantRowInTable(assistant) {
 }
 
 /* ===========================================
-   =   VALIDACIÓN
+    =   VALIDACIÓN
    =========================================== */
 function validateEditAssistantForm(data) {
     const errors = [];
