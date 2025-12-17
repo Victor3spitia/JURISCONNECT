@@ -1811,3 +1811,4 @@ window.handleDuplicateError = handleDuplicateError;
 window.checkForDuplicates = checkForDuplicates;
 window.performSearch = performSearch;
 window.clearSearch = clearSearch;
+}
