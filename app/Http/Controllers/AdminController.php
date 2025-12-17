@@ -14,82 +14,119 @@ class AdminController extends Controller
     public function index(Request $request)
     {
         try {
-            // Iniciar query builder
-            $query = Lawyer::query();
             $searchTerm = $request->get('search');
 
-            // Aplicar búsqueda si existe el término de búsqueda
+            // ============================
+            // BUSCAR ABOGADOS
+            // ============================
+            $query = Lawyer::query();
+
             if ($searchTerm) {
-                $query->where(function ($q) use ($searchTerm) {
-                    $q->where('nombre', 'ILIKE', '%' . $searchTerm . '%')
-                      ->orWhere('apellido', 'ILIKE', '%' . $searchTerm . '%')
-                      ->orWhere('tipo_documento', 'ILIKE', '%' . $searchTerm . '%')
-                      ->orWhere('numero_documento', 'ILIKE', '%' . $searchTerm . '%')
-                      ->orWhere('correo', 'ILIKE', '%' . $searchTerm . '%')
-                      ->orWhere('telefono', 'ILIKE', '%' . $searchTerm . '%')
-                      ->orWhere('especialidad', 'ILIKE', '%' . $searchTerm . '%');
+                $searchTerms = explode(' ', $searchTerm); // separar por espacios
+
+                $query->where(function ($q) use ($searchTerms) {
+                    foreach ($searchTerms as $term) {
+                        $q->where(function ($q2) use ($term) {
+                            $q2->where('nombre', 'ILIKE', "%$term%")
+                                ->orWhere('apellido', 'ILIKE', "%$term%")
+                                ->orWhere('tipo_documento', 'ILIKE', "%$term%")
+                                ->orWhere('numero_documento', 'ILIKE', "%$term%")
+                                ->orWhere('correo', 'ILIKE', "%$term%")
+                                ->orWhere('telefono', 'ILIKE', "%$term%")
+                                ->orWhere('especialidad', 'ILIKE', "%$term%");
+                        });
+                    }
                 });
             }
 
+            // ============================
+            // BUSCAR ASISTENTES
+            // ============================
+            $assistantQuery = Assistant::with('lawyers');
 
-            // Si es una petición para obtener todos los datos (para búsqueda híbrida)
-            if ($request->get('get_all') && $request->ajax()) {
-                $allLawyers = $query->get();
-                return response()->json($allLawyers);
+            if ($searchTerm) {
+                $searchTerms = explode(' ', $searchTerm);
+
+                $assistantQuery->where(function ($q) use ($searchTerms) {
+                    foreach ($searchTerms as $term) {
+                        $q->where(function ($q2) use ($term) {
+                            $q2->where('nombre', 'ILIKE', "%$term%")
+                                ->orWhere('apellido', 'ILIKE', "%$term%")
+                                ->orWhere('tipo_documento', 'ILIKE', "%$term%")
+                                ->orWhere('numero_documento', 'ILIKE', "%$term%")
+                                ->orWhere('correo', 'ILIKE', "%$term%")
+                                ->orWhere('telefono', 'ILIKE', "%$term%");
+                        });
+                    }
+                });
             }
 
-            // Obtener abogados paginados
+            // ============================
+            // PAGINACIONES
+            // ============================
             $lawyers = $query->paginate(10, ['*'], 'lawyersPage');
-
-            // TABLA PEQUEÑA (mostrar todos)
             $lawyersSimple = Lawyer::paginate(10, ['*'], 'lawyersSimplePage');
 
-            $assistants = Assistant::with('lawyers')->paginate(10, ['*'], 'assistantsPage');
-            $assistantsSimple = Assistant::with('lawyers')->paginate(10, ['*'], 'assistantsSimplePage');
+            $assistants = $assistantQuery->paginate(10, ['*'], 'assistantsPage');
+            $assistantsSimple = Assistant::paginate(10, ['*'], 'assistantsSimplePage');
 
             $abogados = Lawyer::all();
 
-
-            // Mantener parámetros de búsqueda en la paginación
-            $lawyers->appends(['search' => $searchTerm]);
-            $assistants->appends(['search' => $searchTerm]);
-            $lawyersSimple->appends(['search' => $searchTerm]);
-            $assistantsSimple->appends(['search' => $searchTerm]);
-
-            // Si es una petición AJAX, devolver solo la vista parcial que corresponda
-            if ($request->ajax()) {
-                if ($request->has('lawyersPage')) {
-                    $html = view('profile.partials.lawyers-table', [
-                        'lawyers' => $lawyers
-                    ])->render();
-                } elseif ($request->has('lawyersSimplePage')) {
-                    $html = view('profile.partials.lawyers-table-simple', [
-                        'lawyersSimple' => $lawyersSimple
-                    ])->render();
-                } elseif ($request->has('assistantsPage')) {
-                    $html = view('profile.partials.assistants-table', [
-                        'assistants' => $assistants
-                    ])->render();
-                } elseif ($request->has('assistantsSimplePage')) {
-                    $html = view('profile.partials.assistants-table-simple', [
-                        'assistantsSimple' => $assistantsSimple
-                    ])->render();
-                }
-                return response()->json([
-                    'html' => $html,
-                    'success' => true
-                ]);
+            // Mantener búsqueda en paginación
+            foreach ([$lawyers, $assistants, $lawyersSimple, $assistantsSimple] as $p) {
+                $p->appends(['search' => $searchTerm]);
             }
 
-            // Contar total de abogados registrados
+            // ============================
+            // PETICIONES AJAX (BÚSQUEDA SIN RECARGAR)
+            // ============================
+            if ($request->ajax() && $request->has('search')) {
+
+                $section = $request->get('section');
+
+                if ($section === 'lawyers') {
+                    return response()->json([
+                        'success' => true,
+                        'html' => view('profile.partials.lawyers-table', [
+                            'lawyers' => $lawyers
+                        ])->render()
+                    ]);
+                }
+
+                if ($section === 'assistants') {
+                    return response()->json([
+                        'success' => true,
+                        'html' => view('profile.partials.assistants-table', [
+                            'assistants' => $assistants
+                        ])->render()
+                    ]);
+                }
+            }
+
+            // ============================
+            // PETICIONES AJAX (PAGINACIÓN)
+            // ============================
+            if ($request->ajax()) {
+                if ($request->has('lawyersPage')) {
+                    $html = view('profile.partials.lawyers-table', ['lawyers' => $lawyers])->render();
+                } elseif ($request->has('lawyersSimplePage')) {
+                    $html = view('profile.partials.lawyers-table-simple', ['lawyersSimple' => $lawyersSimple])->render();
+                } elseif ($request->has('assistantsPage')) {
+                    $html = view('profile.partials.assistants-table', ['assistants' => $assistants])->render();
+                } elseif ($request->has('assistantsSimplePage')) {
+                    $html = view('profile.partials.assistants-table-simple', ['assistantsSimple' => $assistantsSimple])->render();
+                }
+
+                return response()->json(['html' => $html, 'success' => true]);
+            }
+
+            // ============================
+            // CONTADORES PARA DASHBOARD
+            // ============================
             $totalLawyers = Lawyer::count();
-
             $cases_count = Proceso::count();
-
             $totalAsistentes = Assistant::count();
 
-
-            // Para peticiones normales, devolver la vista completa
             return view('dashboard', compact(
                 'lawyers',
                 'totalLawyers',
@@ -101,6 +138,7 @@ class AdminController extends Controller
                 'assistantsSimple'
             ));
         } catch (\Exception $e) {
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -108,40 +146,7 @@ class AdminController extends Controller
                 ], 500);
             }
 
-            // Para peticiones normales, redirigir con error
             return back()->with('error', 'Error al cargar los datos');
-        }
-    }
-
-    // Método adicional para búsqueda rápida (opcional)
-    public function search(Request $request)
-    {
-        try {
-            $searchTerm = $request->get('term');
-
-            if (!$searchTerm) {
-                return response()->json([]);
-            }
-
-            $lawyers = Lawyer::where(function ($q) use ($searchTerm) {
-                $q->where('nombre', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('apellido', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('numero_documento', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('correo', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('telefono', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('especialidad', 'LIKE', '%' . $searchTerm . '%');
-            })->limit(20)->get(['id', 'nombre', 'apellido', 'numero_documento']);
-
-            return response()->json([
-                'success' => true,
-                'data' => $lawyers,
-                'count' => $lawyers->count()
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error en la búsqueda: ' . $e->getMessage()
-            ], 500);
         }
     }
 }

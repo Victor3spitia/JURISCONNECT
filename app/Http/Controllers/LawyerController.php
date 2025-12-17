@@ -308,19 +308,21 @@ class LawyerController extends Controller
             $lawyer->update([
                 'nombre' => trim($validated['nombre']),
                 'apellido' => trim($validated['apellido']),
-                'tipo_documento' => $validated['tipoDocumento'],
-                'numero_documento' => trim($validated['numeroDocumento']),
+                'tipo_documento' => $validated['tipo_documento'],
+                'numero_documento' => trim($validated['numero_documento']),
                 'correo' => trim(strtolower($validated['correo'])),
                 'telefono' => $validated['telefono'] ?? null,
                 'especialidad' => $validated['especialidad'] ?? null,
             ]);
+
 
             // Actualizar usuario asociado
             if ($lawyer->user) {
                 $lawyer->user->update([
                     'name' => trim($validated['nombre']) . ' ' . trim($validated['apellido']),
                     'email' => trim(strtolower($validated['correo'])),
-                    'numero_documento' => trim($validated['numeroDocumento']),
+                    'numero_documento' => trim($validated['numero_documento']),
+
                 ]);
             }
 
@@ -430,13 +432,6 @@ class LawyerController extends Controller
                 'deleted_by' => auth()->email ?? 'unknown'
             ]);
 
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Asistente eliminado exitosamente.',
-                ], 200);
-            }
-
             return $this->successResponse(
                 $request,
                 'Asistente eliminado exitosamente.',
@@ -503,13 +498,11 @@ class LawyerController extends Controller
 
             DB::commit();
 
-
-            return $this->successResponse(
-                $request,
-                'Asistente actualizado correctamente.',
-                ['assistant' => $assistant->fresh()->load('user', 'lawyers')],
-                200
-            );
+            return response()->json([
+                'success' => true,
+                'message' => 'Asistente actualizado correctamente.',
+                'assistant' => $assistant->fresh()->load('lawyers')
+            ]);
         } catch (ValidationException $e) {
             DB::rollBack();
             return $this->validationErrorResponse($request, $e);

@@ -130,7 +130,7 @@
                             <label>Abogados asignados:</label>
                             <div id="lawyerList"></div>
 
-                            <button type="button" class="btn-submit" style="margin-top:10px;" id="addLawyerBtnCreate">
+                            <button type="button" class="btn-submit" style="margin-top:10px;" id="addLawyerBtn">
                                 + Agregar Abogado
                             </button>
                         </div>
@@ -165,16 +165,9 @@
                 </div>
 
                 <div class="modal-body">
-                    <form id="editLawyerForm" method="POST" action="#">
+                    <form id="editLawyerForm" method="POST">
                         @csrf
-
-                        <div class="form-group">
-                            <label for="editipodeusuario">Usuario:</label>
-                            <select id="editipodeusuario" name="tipodeusuario" required>
-                                <option value="assistant">Asistente Juridico</option>
-                                <option value="lawyer">Abogado</option>
-                            </select>
-                        </div>
+                        @method('PUT')
 
                         <div class="form-group">
                             <label for="editNombre">Nombre:</label>
@@ -188,7 +181,7 @@
 
                         <div class="form-group">
                             <label for="editTipoDocumento">Tipo de Documento:</label>
-                            <select id="editTipoDocumento" name="tipoDocumento" required>
+                            <select id="editTipoDocumento" name="tipo_documento" required>
                                 <option value="">Seleccione...</option>
                                 <option value="CC">Cédula de Ciudadanía</option>
                                 <option value="CE">Cédula de Extranjería</option>
@@ -198,7 +191,7 @@
 
                         <div class="form-group">
                             <label for="editNumeroDocumento">Número de Documento:</label>
-                            <input type="text" id="editNumeroDocumento" name="numeroDocumento" required>
+                            <input id="editNumeroDocumento" name="numero_documento" required>
                         </div>
 
                         <div class="form-group">
@@ -222,7 +215,6 @@
                         </div>
                     </form>
                 </div>
-            
             </div>
         </div>
 
@@ -234,8 +226,9 @@
                     <button class="modal-close" id="closeEditAssistantModal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <form id="form-update" method="POST" action="#">
+                    <form id="editAssistantForm" method="POST">
                         @csrf
+                        @method('PUT')
                         <div class="form-group">
                             <label for="editNombre">Nombre:</label>
                             <input type="text" id="editAssistantNombre" name="nombre" required>
@@ -248,7 +241,7 @@
 
                         <div class="form-group">
                             <label for="editTipoDocumento">Tipo de Documento:</label>
-                            <select id="editAssistantTipoDocumento" name="tipo_documento" required>
+                            <select id="editTipoDocumento" name="tipo_documento" required>
                                 <option value="">Seleccione...</option>
                                 <option value="CC">Cédula de Ciudadanía</option>
                                 <option value="CE">Cédula de Extranjería</option>
@@ -258,8 +251,12 @@
 
                         <div class="form-group">
                             <label for="editNumeroDocumento">Número de Documento:</label>
-                            <input type="text" id="editAssistantNumeroDocumento" name="numero_documento" required>
+                            <input type="text"
+                                id="editNumeroDocumento"
+                                name="numero_documento"
+                                required>
                         </div>
+
 
                         <div class="form-group">
                             <label for="editCorreo">Correo:</label>
@@ -284,7 +281,8 @@
                         <div class="form-group">
                             <label>Abogados asignados:</label>
                             <div id="assignedLawyersContainer"></div>
-                            <button type="button" class="btn-submit" style="margin-top:10px;" id="addLawyerBtn">+ Agregar abogado</button>
+                            <button type="button" class="btn-submit" style="margin-top:10px;" id="addLawyerBtn">+
+                                Agregar abogado</button>
                         </div>
 
                         <div class="form-actions">
@@ -349,7 +347,7 @@
         <div class="main-content" id="mainContent">
             <div class="header">
                 <button class="hamburger" id="hamburgerBtn">☰</button>
-                <div class="title-logo-container"> 
+                <div class="title-logo-container">
                     <h1 class="title">JustConnect SENA</h1>
                 </div>
                 <div class="logo-container">
@@ -412,20 +410,18 @@
                     </div>
 
                     <div class="search-section">
-                        <input type="text" name="search" class="search-input"
-                            placeholder="Buscar por nombre, apellido o número de documento"
-                            value="{{ request('search') }}">
-                        </form>
-
+                        <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre, apellido o número de documento">
                     </div>
+
 
                     <div class="action-buttons">
                         <button class="btn-primary" id="btnOpenAsistente">CREAR NUEVO ASISTENTE</button>
                         <a href="{{ route('asistente.export.excel') }}" class="btn-success">EXPORTAR EXCEL</a>
                         <a href="{{ route('asistente.export.pdf') }}" class="btn-danger">EXPORTAR PDF</a>
                     </div>
-                    @include('profile.partials.assistants-table', ['assistants' => $assistants])
-
+                    <div id="assistantsTableContainer">
+                        @include('profile.partials.assistants-table', ['assistants' => $assistants])
+                    </div>
                 </div>
 
                 <!-- SECCIÓN GESTIÓN DE ABOGADOS -->
@@ -436,8 +432,8 @@
                     </div>
 
                     <div class="search-section">
-                        <input type="text" class="search-input"
-                            placeholder="Buscar por nombre, apellido o número de documento" id="searchAbogados">
+                        <input type="text" id="searchAbogados" class="search-input"
+                            placeholder="Buscar por nombre, apellido o número de documento">
                     </div>
 
                     <div class="action-buttons">
@@ -446,7 +442,10 @@
                         <a href="{{ route('lawyers.export.pdf') }}" class="btn-danger">EXPORTAR PDF</a>
                     </div>
 
-                    @include('profile.partials.lawyers-table', ['lawyers' => $lawyers])
+                    <div id="AbogadosTableWrapper">
+                        @include('profile.partials.lawyers-table', ['lawyers' => $lawyers])
+                    </div>
+
 
                 </div>
 
@@ -456,7 +455,6 @@
     </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="{{ asset('js/dash.js') }}"></script>
+
 
 </x-app-layout>

@@ -4,7 +4,15 @@ import laravel from 'laravel-vite-plugin';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: [
+                'resources/css/app.css',
+                'resources/js/app.js',
+
+                // ✅ AGREGAR ESTOS JS
+                'resources/js/asistentes.js',
+            
+                'resources/js/dash.js',
+            ],
             refresh: true,
         }),
     ],
@@ -13,7 +21,15 @@ export default defineConfig({
         outDir: 'public/build',
         emptyOutDir: true,
         rollupOptions: {
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: [
+                'resources/css/app.css',
+                'resources/js/app.js',
+
+                // ✅ LOS MISMOS AQUÍ
+                'resources/js/asistentes.js',
+               
+                'resources/js/dash.js',
+            ],
         },
     },
 });

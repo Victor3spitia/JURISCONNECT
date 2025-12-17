@@ -9,6 +9,6 @@ class AssistantSeeder extends Seeder
 {
     public function run(): void
     {
-        Assistant::factory()->count(10)->create();
+        Assistant::factory()->count(20)->create();
     }
 }

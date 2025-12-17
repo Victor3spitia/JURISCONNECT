@@ -13,12 +13,14 @@ use App\Http\Controllers\ProcesoReportController;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\AssistantExport;
 
+
 // ===================================================================
 // RUTA POR DEFECTO
 // ===================================================================
 Route::get('/', function () {
     return redirect()->route('login');
-});
+}); 
+
 
 // ===================================================================
 // RUTAS DE AUTENTICACIÓN
@@ -86,6 +88,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::put('/assistants/{assistant}', [LawyerController::class, 'updateAssistant'])
         ->name('assistants.update');
+
+    Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+
 
     // ===============================================================
     // PROCESOS LEGALES

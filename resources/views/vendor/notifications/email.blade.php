@@ -20,7 +20,7 @@
     <div class="container">
         <div class="header">
             <img src="https://senasofiaplus.xyz/wp-content/uploads/2023/10/logo-del-sena-01.png" alt="Logo SENA" class="logo">
-            <h1 class="title">Restablecer Contraseña</h1>
+            <h1 class="title"><center>Restablecer Contraseña</center></h1>
         </div>
 
         <div class="content">

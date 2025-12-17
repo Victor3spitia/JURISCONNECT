@@ -368,28 +368,26 @@ async function checkForDuplicates(formData, currentId = null) {
 /* ========= VALIDACIONES ========= */
 function validateForm(formData) {
     const errors = [];
-    if (!formData.get("nombre") || formData.get("nombre").trim() === "")
+
+    if (!formData.get("nombre")?.trim())
         errors.push("El nombre es obligatorio");
-    if (!formData.get("apellido") || formData.get("apellido").trim() === "")
+
+    if (!formData.get("apellido")?.trim())
         errors.push("El apellido es obligatorio");
-    if (
-        !formData.get("tipoDocumento") ||
-        formData.get("tipoDocumento").trim() === ""
-    )
+
+    if (!formData.get("tipo_documento")?.trim())
         errors.push("El tipo de documento es obligatorio");
-    if (
-        !formData.get("numeroDocumento") ||
-        formData.get("numeroDocumento").trim() === ""
-    )
+
+    if (!formData.get("numero_documento")?.trim())
         errors.push("El número de documento es obligatorio");
-    if (!formData.get("correo") || formData.get("correo").trim() === "")
+
+    if (!formData.get("correo")?.trim())
         errors.push("El correo electrónico es obligatorio");
-    if (!formData.get("telefono") || formData.get("telefono").trim() === "")
+
+    if (!formData.get("telefono")?.trim())
         errors.push("El teléfono es obligatorio");
-    if (
-        !formData.get("especialidad") ||
-        formData.get("especialidad").trim() === ""
-    )
+
+    if (!formData.get("especialidad")?.trim())
         errors.push("La especialidad es obligatoria");
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -904,6 +902,22 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    // Delegación: eliminar proceso con confirmación personalizada
+    document.addEventListener("submit", async function (e) {
+        if (e.target.classList.contains("delete-proceso-form")) {
+            e.preventDefault();
+            const confirmed = await showCustomAlert(
+                "warning",
+                "Confirmar Eliminación",
+                "¿Seguro que deseas eliminar este proceso?",
+                true,
+                "Eliminar",
+                "Cancelar"
+            );
+            if (confirmed) e.target.submit();
+        }
+    });
+
     // Delegación: abrir modal de edición
     document.addEventListener("click", function (e) {
         if (e.target.classList.contains("btn-edit")) {
@@ -949,16 +963,20 @@ document.addEventListener("DOMContentLoaded", function () {
                     method: "POST",
                     headers: {
                         "X-CSRF-TOKEN": csrf,
+                        Accept: "application/json",
                     },
-                    body: data,
+                    body: (() => {
+                        data.append("_method", "PUT");
+                        return data;
+                    })(),
                 });
 
                 if (response.ok) {
                     const updatedLawyer = {
                         nombre: data.get("nombre"),
                         apellido: data.get("apellido"),
-                        tipo_documento: data.get("tipoDocumento"),
-                        numero_documento: data.get("numeroDocumento"),
+                        tipo_documento: data.get("tipo_documento"),
+                        numero_documento: data.get("numero_documento"),
                         correo: data.get("correo"),
                         telefono: data.get("telefono"),
                         especialidad: data.get("especialidad"),
@@ -1216,10 +1234,419 @@ if (btnCloseAsistente) {
 if (btnCancelAsistente) {
     btnCancelAsistente.addEventListener("click", closeAssistantModal);
 }
+
 /* =============================
    =    EDITAR ASISTENTE
    ============================= */
-const editAssistantForm = document.getElementById("editAssistantForm");
+document.addEventListener("click", function (e) {
+    // ABRIR MODAL
+    if (e.target.classList.contains("btn-edit-assistant")) {
+        const btn = e.target;
+        const id = btn.dataset.id;
+
+        // Llenar campos
+        editAssistantNombre.value = btn.dataset.nombre;
+        editAssistantApellido.value = btn.dataset.apellido;
+        editAssistantTipoDocumento.value = btn.dataset.tipo_documento;
+        editAssistantNumeroDocumento.value = btn.dataset.numero_documento;
+        editAssistantCorreo.value = btn.dataset.correo;
+        editAssistantTelefono.value = btn.dataset.telefono || "";
+
+        // Action del form
+        editAssistantForm.action = `/assistants/${id}`;
+
+        // Limpiar abogados asignados
+        const container = document.getElementById("assignedLawyersContainer");
+        container.innerHTML = "";
+
+        // Cargar abogados asignados
+        const lawyers = JSON.parse(btn.dataset.lawyers || "[]");
+        lawyers.forEach((lawyerId) => addLawyerSelect(lawyerId));
+
+        // Mostrar modal
+        editAssistantModal.style.display = "flex";
+    }
+
+    // CERRAR MODAL
+    if (
+        e.target.id === "closeEditAssistantModal" ||
+        e.target.id === "cancelEditBtn"
+    ) {
+        editAssistantModal.style.display = "none";
+    }
+
+    // AGREGAR SELECT ABOGADO
+    if (e.target.id === "addLawyerBtn") {
+        addLawyerSelect();
+    }
+
+    // ELIMINAR SELECT ABOGADO
+    if (e.target.classList.contains("remove-lawyer")) {
+        e.target.parentElement.remove();
+    }
+});
+
+/* ===========================================
+   =   FUNCIÓN AGREGAR SELECT DE ABOGADO
+   =========================================== */
+function addLawyerSelect(selectedId = null) {
+    const baseSelect = document.querySelector(".lawyer-select");
+    const container = document.getElementById("assignedLawyersContainer");
+
+    const select = baseSelect.cloneNode(true);
+    select.style.display = "block";
+    select.style.flex = "1";
+    select.name = "lawyers[]";
+
+    if (selectedId) {
+        select.value = selectedId;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("lawyer-wrapper");
+    wrapper.style.display = "flex";
+    wrapper.style.alignItems = "center";
+    wrapper.style.gap = "10px";
+    wrapper.style.marginBottom = "10px";
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.textContent = "Eliminar";
+    removeBtn.classList.add("remove-lawyer", "btn-cancel");
+
+    wrapper.appendChild(select);
+    wrapper.appendChild(removeBtn);
+    container.appendChild(wrapper);
+}
+
+/* ===========================================
+   =    ENVÍO AJAX UPDATE (MISMO ESTILO ABOGADO)
+   =========================================== */
+if (editAssistantForm) {
+    editAssistantForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const form = this;
+        const data = new FormData(form);
+        const assistantId = form.action.split("/").pop();
+
+        // ✅ VALIDACIÓN
+        const validationErrors = validateEditAssistantForm(data);
+        if (validationErrors.length > 0) {
+            await showCustomAlert(
+                "warning",
+                "Campos Incompletos",
+                validationErrors.join("\n")
+            );
+            return;
+        }
+
+        // ✅ DUPLICADOS
+        const hasDuplicates = await checkForAssistantDuplicates(
+            data,
+            assistantId
+        );
+        if (hasDuplicates) return;
+
+        // ✅ ENVÍO
+        try {
+            const response = await fetch(form.action, {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": getCsrfToken(),
+                    Accept: "application/json",
+                },
+                body: data,
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                updateAssistantRowInTable(result.assistant);
+
+                await showCustomAlert("success", "¡Perfecto!", result.message);
+
+                editAssistantModal.style.display = "none";
+            } else {
+                await showCustomAlert(
+                    "error",
+                    "Error",
+                    result.message || "No se pudo actualizar."
+                );
+            }
+        } catch (err) {
+            console.error(err);
+            await showCustomAlert(
+                "error",
+                "Error inesperado",
+                "Inténtalo nuevamente."
+            );
+        }
+    });
+
+    /* ===========================================
+   = VERIFICAR DUPLICADOS ASISTENTE (AJAX)
+   =========================================== */
+    async function checkForAssistantDuplicates(data, assistantId) {
+        try {
+            const response = await fetch("/lawyers/check-duplicates", {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": getCsrfToken(),
+                    Accept: "application/json",
+                },
+                body: new URLSearchParams({
+                    numero_documento: data.get("numero_documento"),
+                    correo: data.get("correo"),
+                    telefono: data.get("telefono"),
+                    current_id: assistantId,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (result.has_duplicates) {
+                const messages = result.duplicates.map((d) => `• ${d.message}`);
+
+                await showCustomAlert(
+                    "warning",
+                    "Datos duplicados",
+                    messages.join("\n")
+                );
+
+                return true; // 🚫 detener submit
+            }
+
+            return false; // ✅ continuar
+        } catch (error) {
+            console.error(error);
+            await showCustomAlert(
+                "error",
+                "Error",
+                "No se pudo verificar duplicados."
+            );
+            return true;
+        }
+    }
+
+
+/* ========= FUNCIONES ESPECÍFICAS PARA ASISTENTES JURÍDICOS ========= */
+
+/* ========= VALIDACIONES PARA ASISTENTES ========= */
+function validateAssistantForm(formData) {
+    const errors = [];
+    if (!formData.get("nombre") || formData.get("nombre").trim() === "")
+        errors.push("El nombre es obligatorio");
+    if (!formData.get("apellido") || formData.get("apellido").trim() === "")
+        errors.push("El apellido es obligatorio");
+    if (
+        !formData.get("tipoDocumento") ||
+        formData.get("tipoDocumento").trim() === ""
+    )
+        errors.push("El tipo de documento es obligatorio");
+    if (
+        !formData.get("numeroDocumento") ||
+        formData.get("numeroDocumento").trim() === ""
+    )
+        errors.push("El número de documento es obligatorio");
+    if (!formData.get("correo") || formData.get("correo").trim() === "")
+        errors.push("El correo electrónico es obligatorio");
+    if (!formData.get("telefono") || formData.get("telefono").trim() === "")
+        errors.push("El teléfono es obligatorio");
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.get("correo") && !emailRegex.test(formData.get("correo")))
+        errors.push("El formato del correo electrónico no es válido");
+
+    return errors;
+}
+
+function validateEditAssistantForm(formData) {
+    return validateAssistantForm(formData);
+}
+
+/* ========= VERIFICACIÓN DE DUPLICADOS PARA ASISTENTES ========= */
+async function checkAssistantDuplicates(formData, currentId = null) {
+    try {
+        const body = {
+            numero_documento: formData.get("numeroDocumento"),
+            correo: formData.get("correo"),
+            current_id: currentId,
+        };
+
+        const csrf = getCsrfToken();
+        const response = await fetch("/assistants/check-duplicates", {
+            method: "POST",
+            headers: {
+                "X-CSRF-TOKEN": csrf,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            if (result.duplicates && result.duplicates.length > 0) {
+                const duplicateMessages = result.duplicates.map((duplicate) => {
+                    if (duplicate.field === "numero_documento")
+                        return `• Número de documento ${duplicate.value} ya está registrado`;
+                    if (duplicate.field === "correo")
+                        return `• Correo electrónico ${duplicate.value} ya está registrado`;
+                    return `• ${duplicate.field}: ${duplicate.value} ya existe`;
+                });
+                await showCustomAlert(
+                    "warning",
+                    "Información Duplicada Detectada",
+                    `Se encontraron los siguientes duplicados:\n\n${duplicateMessages.join(
+                        "\n"
+                    )}\n\nPor favor, modifica estos campos antes de continuar.`
+                );
+                return true;
+            }
+        }
+    } catch (err) {
+        console.log("No se pudo verificar duplicados:", err);
+    }
+    return false;
+}
+
+/* ========= ACTUALIZAR FILA EN TABLA DE ASISTENTES ========= */
+function updateAssistantRowInTable(id, updatedData) {
+    const row = document.querySelector(`tr[data-assistant-id='${id}']`);
+    if (!row) return;
+    
+    // Actualizar las celdas según el orden de la tabla
+    row.children[0].textContent = updatedData.nombre || "";
+    row.children[1].textContent = updatedData.apellido || "";
+    row.children[2].textContent = updatedData.tipo_documento || "";
+    row.children[3].textContent = updatedData.numero_documento || "";
+    row.children[4].textContent = updatedData.correo || "";
+    row.children[5].textContent = updatedData.telefono || "";
+}
+
+/* ========= VALIDACIÓN EN TIEMPO REAL PARA ASISTENTES ========= */
+function setupAssistantRealTimeValidation(fieldName, inputElement) {
+    let timeoutId;
+    inputElement.addEventListener("input", function () {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(async () => {
+            const value = this.value.trim();
+            if (value.length < 3) {
+                inputElement.classList.remove("error", "success");
+                hideFieldError(inputElement);
+                return;
+            }
+            try {
+                const csrf = getCsrfToken();
+                const response = await fetch("/assistants/check-field", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": csrf,
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                    },
+                    body: JSON.stringify({ field: fieldName, value }),
+                });
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.exists) {
+                        inputElement.classList.add("error");
+                        inputElement.classList.remove("success");
+                        showFieldError(
+                            inputElement,
+                            `Este ${
+                                fieldName === "numeroDocumento" ||
+                                fieldName === "numero_documento"
+                                    ? "número de documento"
+                                    : "correo"
+                            } ya está registrado`
+                        );
+                    } else {
+                        inputElement.classList.add("success");
+                        inputElement.classList.remove("error");
+                        hideFieldError(inputElement);
+                    }
+                }
+            } catch (err) {
+                console.log("Error en validación en tiempo real:", err);
+            }
+        }, 800);
+    });
+}
+
+/* ========= INICIALIZACIÓN DE EVENTOS PARA ASISTENTES ========= */
+document.addEventListener("DOMContentLoaded", function () {
+    
+    // ===== CREAR ASISTENTE =====
+    const createAssistantForm = document.querySelector("#modalAsistente form");
+    if (createAssistantForm) {
+        createAssistantForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = new FormData(form);
+
+            const validationErrors = validateAssistantForm(data);
+            if (validationErrors.length > 0) {
+                await showCustomAlert(
+                    "warning",
+                    "Campos Incompletos",
+                    "Por favor, completa todos los campos obligatorios:\n\n" +
+                        validationErrors.join("\n")
+                );
+                return;
+            }
+
+            const hasDuplicates = await checkAssistantDuplicates(data);
+            if (hasDuplicates) return;
+
+            try {
+                const csrf = getCsrfToken();
+                const response = await fetch("/lawyers", {
+                    method: "POST",
+                    headers: { "X-CSRF-TOKEN": csrf },
+                    body: data,
+                });
+
+                if (response.ok) {
+                    await showCustomAlert(
+                        "success",
+                        "¡Excelente!",
+                        `El asistente jurídico ${data.get("nombre")} ${data.get(
+                            "apellido"
+                        )} ha sido registrado exitosamente.`
+                    );
+                    form.reset();
+                    closeAssistantModal();
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    const handled = await handleDuplicateError(
+                        error,
+                        response.status,
+                        "create"
+                    );
+                    if (!handled)
+                        await showCustomAlert(
+                            "error",
+                            "Error al Crear",
+                            "Error al guardar: " +
+                                (error.message || "Verifica los campos.")
+                        );
+                }
+            } catch (err) {
+                console.error(err);
+                await showCustomAlert(
+                    "error",
+                    "Error de Conexión",
+                    "No se pudo crear el asistente. Verifica tu conexión e inténtalo de nuevo."
+                );
+            }
+        });
+    }
+
+    // ===== EDITAR ASISTENTE =====
+    const editAssistantForm = document.getElementById("editAssistantForm");
     if (editAssistantForm) {
         editAssistantForm.addEventListener("submit", async function (e) {
             e.preventDefault();
@@ -1306,157 +1733,76 @@ const editAssistantForm = document.getElementById("editAssistantForm");
         });
     }
 
-
-/* ===========================================
-   =   AGREGAR SELECT DE ABOGADO
-   =========================================== */
-function addLawyerSelect(selectedId = null) {
-    const baseSelect = document.querySelector(".lawyer-select");
-    const container = document.getElementById("assignedLawyersContainer");
-
-    const select = baseSelect.cloneNode(true);
-    select.style.display = "block";
-    select.name = "lawyers[]";
-
-    if (selectedId) select.value = selectedId;
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "lawyer-wrapper";
-    wrapper.style.display = "flex";
-    wrapper.style.gap = "10px";
-    wrapper.style.marginBottom = "10px";
-
-    const removeBtn = document.createElement("button");
-    removeBtn.type = "button";
-    removeBtn.textContent = "Eliminar";
-    removeBtn.className = "remove-lawyer btn-cancel";
-
-    wrapper.appendChild(select);
-    wrapper.appendChild(removeBtn);
-    container.appendChild(wrapper);
-}
-
-/* ===========================================
-   =   SUBMIT EDITAR ASISTENTE (AJAX)
-   =========================================== */
-editAssistantForm.addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const form = this;
-    const data = new FormData(form);
-
-    const errors = validateEditAssistantForm(data);
-    if (errors.length) {
-        await showCustomAlert(
-            "warning",
-            "Campos incompletos",
-            errors.join("\n")
-        );
-        return;
-    }
-
-    try {
-        const response = await fetch(form.action, {
-            method: "POST",
-            headers: {
-                "X-CSRF-TOKEN": getCsrfToken(),
-                Accept: "application/json",
-            },
-            body: data,
-        });
-
-        const result = await response.json();
-
-        if (!result.success || !result.assistant) {
-            console.error("Respuesta inválida:", result);
-            await showCustomAlert(
-                "error",
-                "Error",
-                result.message || "No se pudo actualizar."
+    // ===== ELIMINAR ASISTENTE =====
+    document.addEventListener("submit", async function (e) {
+        if (e.target.classList.contains("delete-assistant-form")) {
+            e.preventDefault();
+            const form = e.target;
+            const assistantName = form.dataset.name || "";
+            const confirmed = await showCustomAlert(
+                "warning",
+                "Confirmar Eliminación",
+                `¿Estás seguro de eliminar al asistente ${assistantName}? Esta acción no se puede deshacer.`,
+                true,
+                "Eliminar",
+                "Cancelar"
             );
-            return;
+            if (confirmed) {
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': getCsrfToken(),
+                        },
+                        body: new FormData(form)
+                    });
+
+                    if (response.ok) {
+                        await showCustomAlert(
+                            "success",
+                            "Eliminado",
+                            `El asistente ${assistantName} ha sido eliminado exitosamente.`
+                        );
+                        location.reload();
+                    } else {
+                        await showCustomAlert(
+                            "error",
+                            "Error al Eliminar",
+                            "No se pudo eliminar el asistente. Inténtalo de nuevo."
+                        );
+                    }
+                } catch (err) {
+                    console.error(err);
+                    await showCustomAlert(
+                        "error",
+                        "Error de Conexión",
+                        "No se pudo conectar con el servidor."
+                    );
+                }
+            }
         }
+    });
 
-        const assistant = result.assistant;
+    // ===== VALIDACIÓN EN TIEMPO REAL =====
+    const createNumeroDocumentoAssistant = document.getElementById("numeroDocumento_assistant");
+    const createCorreoAssistant = document.getElementById("correo_assistant");
+    
+    if (createNumeroDocumentoAssistant)
+        setupAssistantRealTimeValidation("numeroDocumento", createNumeroDocumentoAssistant);
+    if (createCorreoAssistant) 
+        setupAssistantRealTimeValidation("correo", createCorreoAssistant);
 
-        updateAssistantRowInTable(assistant);
+    const editNumeroDocumentoAssistant = document.getElementById("editAssistantNumeroDocumento");
+    const editCorreoAssistant = document.getElementById("editAssistantCorreo");
+    
+    if (editNumeroDocumentoAssistant)
+        setupAssistantRealTimeValidation("numeroDocumento", editNumeroDocumentoAssistant);
+    if (editCorreoAssistant) 
+        setupAssistantRealTimeValidation("correo", editCorreoAssistant);
 
-        await showCustomAlert(
-            "success",
-            "¡Perfecto!",
-            `El asistente ${assistant.nombre} ${assistant.apellido} fue actualizado exitosamente.`
-        );
-
-        editAssistantModal.style.display = "none";
-    } catch (error) {
-        console.error(error);
-        await showCustomAlert(
-            "error",
-            "Error inesperado",
-            "Inténtalo nuevamente."
-        );
-    }
+    console.log("Sistema de alertas para asistentes jurídicos inicializado correctamente");
 });
 
-/* ===========================================
-   =   ACTUALIZAR FILA EN TABLA
-   =========================================== */
-function updateAssistantRowInTable(assistant) {
-    if (!assistant || !assistant.id) return;
-
-    const row = document.querySelector(`tr[data-id="${assistant.id}"]`);
-    if (!row) return;
-
-    row.children[0].textContent = assistant.nombre;
-    row.children[1].textContent = assistant.apellido;
-    row.children[2].textContent = assistant.tipo_documento;
-    row.children[3].textContent = assistant.numero_documento;
-    row.children[4].textContent = assistant.correo;
-    row.children[5].textContent = assistant.telefono || "";
-
-    const lawyersCell = row.children[6];
-    lawyersCell.innerHTML = "";
-
-    if (assistant.lawyers?.length) {
-        assistant.lawyers.forEach((lawyer) => {
-            const div = document.createElement("div");
-            div.textContent = `${lawyer.nombre} ${lawyer.apellido}`;
-            div.style.marginLeft = "20px"; // 👈 AQUÍ MISMO
-            lawyersCell.appendChild(div);
-        });
-    } else {
-        lawyersCell.textContent = "Sin abogados asignados";
-    }
-
-    const editBtn = row.querySelector(".btn-edit-assistant");
-    if (editBtn) {
-        editBtn.dataset.nombre = assistant.nombre;
-        editBtn.dataset.apellido = assistant.apellido;
-        editBtn.dataset.tipo_documento = assistant.tipo_documento;
-        editBtn.dataset.numero_documento = assistant.numero_documento;
-        editBtn.dataset.correo = assistant.correo;
-        editBtn.dataset.telefono = assistant.telefono || "";
-        editBtn.dataset.lawyers = JSON.stringify(
-            assistant.lawyers?.map((l) => l.id) || []
-        );
-    }
-}
-
-/* ===========================================
-    =   VALIDACIÓN
-   =========================================== */
-function validateEditAssistantForm(data) {
-    const errors = [];
-    if (!data.get("nombre")?.trim()) errors.push("• El nombre es obligatorio");
-    if (!data.get("apellido")?.trim())
-        errors.push("• El apellido es obligatorio");
-    if (!data.get("tipo_documento")?.trim())
-        errors.push("• El tipo de documento es obligatorio");
-    if (!data.get("numero_documento")?.trim())
-        errors.push("• El número de documento es obligatorio");
-    if (!data.get("correo")?.trim()) errors.push("• El correo es obligatorio");
-    return errors;
-}
 
 /* ========= Exponer funciones útiles globalmente (si las necesitas) ========= */
 window.showCustomAlert = showCustomAlert;
@@ -1465,3 +1811,4 @@ window.handleDuplicateError = handleDuplicateError;
 window.checkForDuplicates = checkForDuplicates;
 window.performSearch = performSearch;
 window.clearSearch = clearSearch;
+}

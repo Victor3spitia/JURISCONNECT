@@ -1,19 +1,20 @@
-<div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Tipo de Documento</th>
-                <th>Número de Documento</th>
-                <th>Correo</th>
-                <th>Teléfono</th>
-                <th>Especialidad</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            @foreach ($lawyers ?? [] as $lawyer)
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Tipo de Documento</th>
+                    <th>Número de Documento</th>
+                    <th>Correo</th>
+                    <th>Teléfono</th>
+                    <th>Especialidad</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                @foreach($lawyers ?? [] as $lawyer)
                 <tr data-id="{{ $lawyer->id }}">
                     <td>{{ $lawyer->nombre }}</td>
                     <td>{{ $lawyer->apellido }}</td>
@@ -23,16 +24,24 @@
                     <td>{{ $lawyer->telefono }}</td>
                     <td>{{ $lawyer->especialidad }}</td>
                     <td>
-                        <button class="btn-edit" data-id="{{ $lawyer->id }}" data-nombre="{{ $lawyer->nombre }}"
-                            data-apellido="{{ $lawyer->apellido }}" data-tipo_documento="{{ $lawyer->tipo_documento }}"
-                            data-numero_documento="{{ $lawyer->numero_documento }}" data-correo="{{ $lawyer->correo }}"
-                            data-telefono="{{ $lawyer->telefono }}" data-especialidad="{{ $lawyer->especialidad }}">
+                        <button class="btn-edit"
+                            data-id="{{ $lawyer->id }}"
+                            data-nombre="{{ $lawyer->nombre }}"
+                            data-apellido="{{ $lawyer->apellido }}"
+                            data-tipo_documento="{{ $lawyer->tipo_documento }}"
+                            data-numero_documento="{{ $lawyer->numero_documento }}"
+                            data-correo="{{ $lawyer->correo }}"
+                            data-telefono="{{ $lawyer->telefono }}"
+                            data-especialidad="{{ $lawyer->especialidad }}">
                             Editar
                         </button>
 
-                        <form action="{{ route('lawyers.destroy', $lawyer->id) }}" method="POST"
-                            class="delete-lawyer-form" data-id="{{ $lawyer->id }}"
-                            data-name="{{ $lawyer->nombre }} {{ $lawyer->apellido }}" style="display: inline;">
+                        <form action="{{ route('lawyers.destroy', $lawyer->id) }}"
+                            method="POST"
+                            class="delete-lawyer-form"
+                            data-id="{{ $lawyer->id }}"
+                            data-name="{{ $lawyer->nombre }} {{ $lawyer->apellido }}"
+                            style="display: inline;">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn-delete">
@@ -41,55 +50,40 @@
                         </form>
                     </td>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+                @endforeach
+            </tbody>
+        </table>
 
-    @include('profile.partials.pagination', ['items' => $lawyers, 'pageKey' => 'page'])
-</div>
+        @include('profile.partials.pagination', ['items' => $lawyers, 'pageKey' => 'page'])
+    </div>
 
-
-<style>
-    .abogado-nombre {
-        font-size: inherit;
-        color: inherit;
-        font-weight: normal;
-        margin-left: 6px;
-    }
-</style>
 <script>
-    document.getElementById('searchInput')?.addEventListener('input', function() {
-        let valor = this.value.trim().toLowerCase();
-        let cards = document.querySelectorAll('.process-card');
+    // ==========================================
+    // BUSCADOR REAL AJAX PARA ABOGADOS
+    // ==========================================
+    const searchInputLawyers = document.getElementById("searchAbogados");
+    if (searchInputLawyers) {
+        let typingTimer;
 
-        cards.forEach(card => {
-            let titulo = card.querySelector('.titulo-proceso');
-            let numero = titulo?.getAttribute('data-numero') ?? '';
-            let contenido = card.innerText.toLowerCase();
+        searchInputLawyers.addEventListener("input", function() {
+            clearTimeout(typingTimer);
 
-            // Nombre abogado
-            let abogado = card.querySelector('.abogado-nombre')?.innerText.toLowerCase() ?? '';
+            typingTimer = setTimeout(() => {
+                const search = this.value;
 
-            // Especialidad abogado
-            let especialidad = card.querySelector('.abogado-especialidad')?.innerText.toLowerCase() ??
-                '';
-
-            if (valor === '') {
-                card.style.display = 'block';
-                return;
-            }
-
-            // Lógica de búsqueda
-            if (
-                numero.includes(valor) ||
-                contenido.includes(valor) ||
-                abogado.includes(valor) ||
-                especialidad.includes(valor)
-            ) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
+                fetch(`/dashboard?search=${encodeURIComponent(search)}&section=lawyers`, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.html) {
+                            document.getElementById("AbogadosTableWrapper").innerHTML = data.html;
+                        }
+                    })
+                    .catch(err => console.error("Error AJAX búsqueda abogados:", err));
+            }, 250); // retraso para no saturar el servidor
         });
-    });
+    }
 </script>
