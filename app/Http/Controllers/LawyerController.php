@@ -176,28 +176,30 @@ class LawyerController extends Controller
                 $validated = $request->validate([
                     'nombre' => 'required|string|max:255',
                     'apellido' => 'required|string|max:255',
-                    'tipoDocumento' => 'required|string|max:50',
-                    'numeroDocumento' => 'required|string|max:50|unique:lawyers,numero_documento',
+                    'tipo_documento' => 'required|string|max:50',
+                    'numero_documento' => 'required|string|max:50|unique:lawyers,numero_documento',
                     'correo' => 'required|email|max:255|unique:lawyers,correo|unique:users,email',
                     'telefono' => 'nullable|string|max:20',
                     'especialidad' => 'nullable|string|max:255',
                 ]);
 
+
                 // Crear usuario
                 $user = User::create([
                     'name' => trim($validated['nombre']) . ' ' . trim($validated['apellido']),
                     'email' => trim(strtolower($validated['correo'])),
-                    'password' => Hash::make($validated['numeroDocumento']),
-                    'role_id' => 2, // ABOGADO
-                    'numero_documento' => trim($validated['numeroDocumento']),
+                    'password' => Hash::make($validated['numero_documento']),
+                    'role_id' => 2,
+                    'numero_documento' => trim($validated['numero_documento']),
                 ]);
+
 
                 // Crear abogado
                 $lawyer = Lawyer::create([
                     'nombre' => trim($validated['nombre']),
                     'apellido' => trim($validated['apellido']),
-                    'tipo_documento' => $validated['tipoDocumento'],
-                    'numero_documento' => trim($validated['numeroDocumento']),
+                    'tipo_documento' => $validated['tipo_documento'],
+                    'numero_documento' => trim($validated['numero_documento']),
                     'correo' => trim(strtolower($validated['correo'])),
                     'telefono' => $validated['telefono'] ?? null,
                     'especialidad' => $validated['especialidad'] ?? null,
@@ -206,7 +208,7 @@ class LawyerController extends Controller
 
                 DB::commit();
 
-                $this->sendCredentials($validated['correo'], $user, $validated['numeroDocumento'], $lawyer->id);
+                $this->sendCredentials($validated['correo'], $user, $validated['numero_documento'], $lawyer->id);
 
                 return $this->successResponse(
                     $request,

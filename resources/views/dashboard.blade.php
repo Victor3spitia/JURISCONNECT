@@ -40,7 +40,7 @@
 
                         <div class="form-group">
                             <label for="tipoDocumento_lawyer">Tipo de Documento:</label>
-                            <select id="tipoDocumento_lawyer" name="tipoDocumento" required>
+                            <select id="tipoDocumento_lawyer" name="tipo_documento" required>
                                 <option value="">Seleccione...</option>
                                 <option value="CC">Cédula de Ciudadanía</option>
                                 <option value="CE">Cédula de Extranjería</option>
@@ -50,7 +50,7 @@
 
                         <div class="form-group">
                             <label for="numeroDocumento_lawyer">Número de Documento:</label>
-                            <input type="text" id="numeroDocumento_lawyer" name="numeroDocumento" required>
+                            <input type="text" id="numeroDocumento_lawyer" name="numero_documento" required>
                         </div>
 
                         <div class="form-group">

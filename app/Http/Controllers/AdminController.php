@@ -64,11 +64,23 @@ class AdminController extends Controller
             // ============================
             // PAGINACIONES
             // ============================
-            $lawyers = $query->paginate(10, ['*'], 'lawyersPage');
-            $lawyersSimple = Lawyer::paginate(10, ['*'], 'lawyersSimplePage');
+            // Obtener abogados paginados
+            $lawyers = $query
+                ->orderBy('id', 'asc') // o 'asc'
+                ->paginate(10, ['*'], 'lawyersPage');
 
-            $assistants = $assistantQuery->paginate(10, ['*'], 'assistantsPage');
-            $assistantsSimple = Assistant::paginate(10, ['*'], 'assistantsSimplePage');
+
+            // TABLA PEQUEÑA (mostrar todos)
+            $lawyersSimple = Lawyer::orderBy('id', 'asc')
+                ->paginate(10, ['*'], 'lawyersSimplePage');
+
+            $assistants = $assistantQuery
+                ->orderBy('id', 'asc')
+                ->paginate(10, ['*'], 'assistantsPage');
+
+            $assistantsSimple = Assistant::with('lawyers')
+                ->orderBy('id', 'asc')
+                ->paginate(10, ['*'], 'assistantsSimplePage');
 
             $abogados = Lawyer::all();
 
