@@ -55,7 +55,7 @@
             <tr>
                 <th>Nombre</th>
                 <th>Apellido</th>
-                <th>Tipo Doc</th>
+                <th>Tipo Doc</th> 
                 <th>N° Documento</th>
                 <th>Correo</th>
                 <th>Teléfono</th>
