@@ -1429,316 +1429,257 @@ if (editAssistantForm) {
         }
     }
 
+    /* ========= FUNCIONES ESPECÍFICAS PARA ASISTENTES JURÍDICOS ========= */
 
-/* ========= FUNCIONES ESPECÍFICAS PARA ASISTENTES JURÍDICOS ========= */
+    /* ========= VALIDACIONES PARA ASISTENTES ========= */
+    function validateAssistantForm(formData) {
+        const errors = [];
+        if (!formData.get("nombre") || formData.get("nombre").trim() === "")
+            errors.push("El nombre es obligatorio");
+        if (!formData.get("apellido") || formData.get("apellido").trim() === "")
+            errors.push("El apellido es obligatorio");
+        if (
+            !formData.get("tipo_documento") ||
+            formData.get("tipo_documento").trim() === ""
+        )
+            errors.push("El tipo de documento es obligatorio");
+        if (
+            !formData.get("numero_documento") ||
+            formData.get("numero_documento").trim() === ""
+        )
+            errors.push("El número de documento es obligatorio");
+        if (!formData.get("correo") || formData.get("correo").trim() === "")
+            errors.push("El correo electrónico es obligatorio");
+        if (!formData.get("telefono") || formData.get("telefono").trim() === "")
+            errors.push("El teléfono es obligatorio");
 
-/* ========= VALIDACIONES PARA ASISTENTES ========= */
-function validateAssistantForm(formData) {
-    const errors = [];
-    if (!formData.get("nombre") || formData.get("nombre").trim() === "")
-        errors.push("El nombre es obligatorio");
-    if (!formData.get("apellido") || formData.get("apellido").trim() === "")
-        errors.push("El apellido es obligatorio");
-    if (
-        !formData.get("tipoDocumento") ||
-        formData.get("tipoDocumento").trim() === ""
-    )
-        errors.push("El tipo de documento es obligatorio");
-    if (
-        !formData.get("numeroDocumento") ||
-        formData.get("numeroDocumento").trim() === ""
-    )
-        errors.push("El número de documento es obligatorio");
-    if (!formData.get("correo") || formData.get("correo").trim() === "")
-        errors.push("El correo electrónico es obligatorio");
-    if (!formData.get("telefono") || formData.get("telefono").trim() === "")
-        errors.push("El teléfono es obligatorio");
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (formData.get("correo") && !emailRegex.test(formData.get("correo")))
+            errors.push("El formato del correo electrónico no es válido");
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.get("correo") && !emailRegex.test(formData.get("correo")))
-        errors.push("El formato del correo electrónico no es válido");
+        return errors;
+    }
 
-    return errors;
-}
+    function validateEditAssistantForm(formData) {
+        return validateAssistantForm(formData);
+    }
 
-function validateEditAssistantForm(formData) {
-    return validateAssistantForm(formData);
-}
+    /* ========= VERIFICACIÓN DE DUPLICADOS PARA ASISTENTES ========= */
+    async function checkAssistantDuplicates(formData, currentId = null) {
+        try {
+            const body = {
+                numero_documento: formData.get("numeroDocumento"),
+                correo: formData.get("correo"),
+                current_id: currentId,
+            };
 
-/* ========= VERIFICACIÓN DE DUPLICADOS PARA ASISTENTES ========= */
-async function checkAssistantDuplicates(formData, currentId = null) {
-    try {
-        const body = {
-            numero_documento: formData.get("numeroDocumento"),
-            correo: formData.get("correo"),
-            current_id: currentId,
-        };
+            const csrf = getCsrfToken();
+            const response = await fetch("/assistants/check-duplicates", {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": csrf,
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                },
+                body: JSON.stringify(body),
+            });
 
-        const csrf = getCsrfToken();
-        const response = await fetch("/assistants/check-duplicates", {
-            method: "POST",
-            headers: {
-                "X-CSRF-TOKEN": csrf,
-                "Content-Type": "application/json",
-                Accept: "application/json",
-            },
-            body: JSON.stringify(body),
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            if (result.duplicates && result.duplicates.length > 0) {
-                const duplicateMessages = result.duplicates.map((duplicate) => {
-                    if (duplicate.field === "numero_documento")
-                        return `• Número de documento ${duplicate.value} ya está registrado`;
-                    if (duplicate.field === "correo")
-                        return `• Correo electrónico ${duplicate.value} ya está registrado`;
-                    return `• ${duplicate.field}: ${duplicate.value} ya existe`;
-                });
-                await showCustomAlert(
-                    "warning",
-                    "Información Duplicada Detectada",
-                    `Se encontraron los siguientes duplicados:\n\n${duplicateMessages.join(
-                        "\n"
-                    )}\n\nPor favor, modifica estos campos antes de continuar.`
-                );
-                return true;
+            if (response.ok) {
+                const result = await response.json();
+                if (result.duplicates && result.duplicates.length > 0) {
+                    const duplicateMessages = result.duplicates.map(
+                        (duplicate) => {
+                            if (duplicate.field === "numero_documento")
+                                return `• Número de documento ${duplicate.value} ya está registrado`;
+                            if (duplicate.field === "correo")
+                                return `• Correo electrónico ${duplicate.value} ya está registrado`;
+                            return `• ${duplicate.field}: ${duplicate.value} ya existe`;
+                        }
+                    );
+                    await showCustomAlert(
+                        "warning",
+                        "Información Duplicada Detectada",
+                        `Se encontraron los siguientes duplicados:\n\n${duplicateMessages.join(
+                            "\n"
+                        )}\n\nPor favor, modifica estos campos antes de continuar.`
+                    );
+                    return true;
+                }
             }
+        } catch (err) {
+            console.log("No se pudo verificar duplicados:", err);
         }
-    } catch (err) {
-        console.log("No se pudo verificar duplicados:", err);
+        return false;
     }
-    return false;
-}
 
-/* ========= ACTUALIZAR FILA EN TABLA DE ASISTENTES ========= */
-function updateAssistantRowInTable(id, updatedData) {
-    const row = document.querySelector(`tr[data-assistant-id='${id}']`);
-    if (!row) return;
-    
-    // Actualizar las celdas según el orden de la tabla
-    row.children[0].textContent = updatedData.nombre || "";
-    row.children[1].textContent = updatedData.apellido || "";
-    row.children[2].textContent = updatedData.tipo_documento || "";
-    row.children[3].textContent = updatedData.numero_documento || "";
-    row.children[4].textContent = updatedData.correo || "";
-    row.children[5].textContent = updatedData.telefono || "";
-}
+    /* ========= ACTUALIZAR FILA EN TABLA DE ASISTENTES ========= */
+    function updateAssistantRowInTable(assistant) {
+        const row = document.querySelector(
+            `tr[data-assistant-id='${assistant.id}']`
+        );
+        if (!row) return;
 
-/* ========= VALIDACIÓN EN TIEMPO REAL PARA ASISTENTES ========= */
-function setupAssistantRealTimeValidation(fieldName, inputElement) {
-    let timeoutId;
-    inputElement.addEventListener("input", function () {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(async () => {
-            const value = this.value.trim();
-            if (value.length < 3) {
-                inputElement.classList.remove("error", "success");
-                hideFieldError(inputElement);
-                return;
-            }
-            try {
-                const csrf = getCsrfToken();
-                const response = await fetch("/assistants/check-field", {
-                    method: "POST",
-                    headers: {
-                        "X-CSRF-TOKEN": csrf,
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                    },
-                    body: JSON.stringify({ field: fieldName, value }),
-                });
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.exists) {
-                        inputElement.classList.add("error");
-                        inputElement.classList.remove("success");
-                        showFieldError(
-                            inputElement,
-                            `Este ${
-                                fieldName === "numeroDocumento" ||
-                                fieldName === "numero_documento"
-                                    ? "número de documento"
-                                    : "correo"
-                            } ya está registrado`
+        // Datos básicos
+        row.children[0].textContent = assistant.nombre ?? "";
+        row.children[1].textContent = assistant.apellido ?? "";
+        row.children[2].textContent = assistant.tipo_documento ?? "";
+        row.children[3].textContent = assistant.numero_documento ?? "";
+        row.children[4].textContent = assistant.correo ?? "";
+        row.children[5].textContent = assistant.telefono ?? "N/A";
+
+        // 🔥 Abogados asignados
+        const lawyersCell = row.children[6];
+        lawyersCell.innerHTML = "";
+
+        if (assistant.lawyers && assistant.lawyers.length > 0) {
+            const ul = document.createElement("ul");
+            ul.style.margin = "0";
+            ul.style.paddingLeft = "20px";
+
+            assistant.lawyers.forEach((lawyer) => {
+                const li = document.createElement("li");
+                li.textContent = `${lawyer.nombre} ${lawyer.apellido}`;
+                ul.appendChild(li);
+            });
+
+            lawyersCell.appendChild(ul);
+        } else {
+            lawyersCell.innerHTML = `<span style="color:#999;">Sin abogados asignados</span>`;
+        }
+    }
+
+    /* ========= VALIDACIÓN EN TIEMPO REAL PARA ASISTENTES ========= */
+    function setupAssistantRealTimeValidation(fieldName, inputElement) {
+        let timeoutId;
+        inputElement.addEventListener("input", function () {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(async () => {
+                const value = this.value.trim();
+                if (value.length < 3) {
+                    inputElement.classList.remove("error", "success");
+                    hideFieldError(inputElement);
+                    return;
+                }
+                try {
+                    const csrf = getCsrfToken();
+                    const response = await fetch("/assistants/check-field", {
+                        method: "POST",
+                        headers: {
+                            "X-CSRF-TOKEN": csrf,
+                            "Content-Type": "application/json",
+                            Accept: "application/json",
+                        },
+                        body: JSON.stringify({ field: fieldName, value }),
+                    });
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.exists) {
+                            inputElement.classList.add("error");
+                            inputElement.classList.remove("success");
+                            showFieldError(
+                                inputElement,
+                                `Este ${
+                                    fieldName === "numeroDocumento" ||
+                                    fieldName === "numero_documento"
+                                        ? "número de documento"
+                                        : "correo"
+                                } ya está registrado`
+                            );
+                        } else {
+                            inputElement.classList.add("success");
+                            inputElement.classList.remove("error");
+                            hideFieldError(inputElement);
+                        }
+                    }
+                } catch (err) {
+                    console.log("Error en validación en tiempo real:", err);
+                }
+            }, 800);
+        });
+    }
+
+    /* ========= INICIALIZACIÓN DE EVENTOS PARA ASISTENTES ========= */
+    document.addEventListener("DOMContentLoaded", function () {
+        // ===== CREAR ASISTENTE =====
+        const createAssistantForm = document.querySelector(
+            "#modalAsistente form"
+        );
+        if (createAssistantForm) {
+            createAssistantForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+                const form = e.target;
+                const data = new FormData(form);
+
+                const validationErrors = validateAssistantForm(data);
+                if (validationErrors.length > 0) {
+                    await showCustomAlert(
+                        "warning",
+                        "Campos Incompletos",
+                        "Por favor, completa todos los campos obligatorios:\n\n" +
+                            validationErrors.join("\n")
+                    );
+                    return;
+                }
+
+                const hasDuplicates = await checkAssistantDuplicates(data);
+                if (hasDuplicates) return;
+
+                try {
+                    const csrf = getCsrfToken();
+                    const response = await fetch("/lawyers", {
+                        method: "POST",
+                        headers: { "X-CSRF-TOKEN": csrf },
+                        body: data,
+                    });
+
+                    if (response.ok) {
+                        await showCustomAlert(
+                            "success",
+                            "¡Excelente!",
+                            `El asistente jurídico ${data.get(
+                                "nombre"
+                            )} ${data.get(
+                                "apellido"
+                            )} ha sido registrado exitosamente.`
                         );
+                        form.reset();
+                        closeAssistantModal();
+                        location.reload();
                     } else {
-                        inputElement.classList.add("success");
-                        inputElement.classList.remove("error");
-                        hideFieldError(inputElement);
-                    }
-                }
-            } catch (err) {
-                console.log("Error en validación en tiempo real:", err);
-            }
-        }, 800);
-    });
-}
-
-/* ========= INICIALIZACIÓN DE EVENTOS PARA ASISTENTES ========= */
-document.addEventListener("DOMContentLoaded", function () {
-    
-    // ===== CREAR ASISTENTE =====
-    const createAssistantForm = document.querySelector("#modalAsistente form");
-    if (createAssistantForm) {
-        createAssistantForm.addEventListener("submit", async function (e) {
-            e.preventDefault();
-            const form = e.target;
-            const data = new FormData(form);
-
-            const validationErrors = validateAssistantForm(data);
-            if (validationErrors.length > 0) {
-                await showCustomAlert(
-                    "warning",
-                    "Campos Incompletos",
-                    "Por favor, completa todos los campos obligatorios:\n\n" +
-                        validationErrors.join("\n")
-                );
-                return;
-            }
-
-            const hasDuplicates = await checkAssistantDuplicates(data);
-            if (hasDuplicates) return;
-
-            try {
-                const csrf = getCsrfToken();
-                const response = await fetch("/lawyers", {
-                    method: "POST",
-                    headers: { "X-CSRF-TOKEN": csrf },
-                    body: data,
-                });
-
-                if (response.ok) {
-                    await showCustomAlert(
-                        "success",
-                        "¡Excelente!",
-                        `El asistente jurídico ${data.get("nombre")} ${data.get(
-                            "apellido"
-                        )} ha sido registrado exitosamente.`
-                    );
-                    form.reset();
-                    closeAssistantModal();
-                    location.reload();
-                } else {
-                    const error = await response.json();
-                    const handled = await handleDuplicateError(
-                        error,
-                        response.status,
-                        "create"
-                    );
-                    if (!handled)
-                        await showCustomAlert(
-                            "error",
-                            "Error al Crear",
-                            "Error al guardar: " +
-                                (error.message || "Verifica los campos.")
+                        const error = await response.json();
+                        const handled = await handleDuplicateError(
+                            error,
+                            response.status,
+                            "create"
                         );
-                }
-            } catch (err) {
-                console.error(err);
-                await showCustomAlert(
-                    "error",
-                    "Error de Conexión",
-                    "No se pudo crear el asistente. Verifica tu conexión e inténtalo de nuevo."
-                );
-            }
-        });
-    }
-
-    // ===== EDITAR ASISTENTE =====
-    const editAssistantForm = document.getElementById("editAssistantForm");
-    if (editAssistantForm) {
-        editAssistantForm.addEventListener("submit", async function (e) {
-            e.preventDefault();
-            const form = e.target;
-            const data = new FormData(form);
-            const assistantId = form.action.split("/").pop();
-
-            const validationErrors = validateEditAssistantForm(data);
-            if (validationErrors.length > 0) {
-                await showCustomAlert(
-                    "warning",
-                    "Campos Incompletos",
-                    validationErrors.join("\n")
-                );
-                return;
-            }
-
-            const hasDuplicates = await checkAssistantDuplicates(data, assistantId);
-            if (hasDuplicates) return;
-
-            try {
-                const csrf = getCsrfToken();
-                const response = await fetch(form.action, {
-                    method: "POST",
-                    headers: {
-                        "X-CSRF-TOKEN": csrf,
-                    },
-                    body: data,
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    
-                    const updatedAssistant = {
-                        nombre: data.get("nombre"),
-                        apellido: data.get("apellido"),
-                        tipo_documento: data.get("tipo_documento"),
-                        numero_documento: data.get("numero_documento"),
-                        correo: data.get("correo"),
-                        telefono: data.get("telefono"),
-                    };
-
-                    updateAssistantRowInTable(assistantId, updatedAssistant);
-                    
-                    await showCustomAlert(
-                        "success",
-                        "¡Perfecto!",
-                        `El asistente ${updatedAssistant.nombre} ${updatedAssistant.apellido} ha sido actualizado exitosamente.`
-                    );
-                    
-                    // Cerrar modal
-                    const editModal = document.getElementById("editAssistantModal");
-                    if (editModal) {
-                        editModal.style.display = "none";
-                        document.body.style.overflow = "auto";
+                        if (!handled)
+                            await showCustomAlert(
+                                "error",
+                                "Error al Crear",
+                                "Error al guardar: " +
+                                    (error.message || "Verifica los campos.")
+                            );
                     }
-                    
-                    // Opcional: recargar para actualizar la lista de abogados asignados
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    const error = await response.json();
-                    const handled = await handleDuplicateError(
-                        error,
-                        response.status,
-                        "edit"
+                } catch (err) {
+                    console.error(err);
+                    await showCustomAlert(
+                        "error",
+                        "Error de Conexión",
+                        "No se pudo crear el asistente. Verifica tu conexión e inténtalo de nuevo."
                     );
-                    if (!handled)
-                        await showCustomAlert(
-                            "error",
-                            "Error de Actualización",
-                            "Error al actualizar: " +
-                                (error.message ||
-                                    "Verifica que todos los campos estén correctos.")
-                        );
                 }
-            } catch (err) {
-                console.error(err);
-                await showCustomAlert(
-                    "error",
-                    "Error Inesperado",
-                    "Ocurrió un error inesperado. Inténtalo de nuevo."
-                );
-            }
-        });
-    }
+            });
+        }
 
-    // ===== ELIMINAR ASISTENTE =====
-    document.addEventListener("submit", async function (e) {
-        if (e.target.classList.contains("delete-assistant-form")) {
+        // ===== ELIMINAR ASISTENTE =====
+        document.addEventListener("submit", async function (e) {
+            if (!e.target.classList.contains("delete-assistant-form")) return;
+
             e.preventDefault();
+
             const form = e.target;
             const assistantName = form.dataset.name || "";
+
             const confirmed = await showCustomAlert(
                 "warning",
                 "Confirmar Eliminación",
@@ -1747,68 +1688,84 @@ document.addEventListener("DOMContentLoaded", function () {
                 "Eliminar",
                 "Cancelar"
             );
-            if (confirmed) {
-                try {
-                    const response = await fetch(form.action, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': getCsrfToken(),
-                        },
-                        body: new FormData(form)
-                    });
 
-                    if (response.ok) {
-                        await showCustomAlert(
-                            "success",
-                            "Eliminado",
-                            `El asistente ${assistantName} ha sido eliminado exitosamente.`
-                        );
-                        location.reload();
-                    } else {
-                        await showCustomAlert(
-                            "error",
-                            "Error al Eliminar",
-                            "No se pudo eliminar el asistente. Inténtalo de nuevo."
-                        );
-                    }
-                } catch (err) {
-                    console.error(err);
-                    await showCustomAlert(
-                        "error",
-                        "Error de Conexión",
-                        "No se pudo conectar con el servidor."
-                    );
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": getCsrfToken(),
+                        Accept: "application/json",
+                    },
+                    body: new FormData(form),
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || "Error al eliminar");
                 }
+
+                // 🔥 QUITAR FILA SIN RECARGAR
+                const row = form.closest("tr");
+                if (row) row.remove();
+
+                await showCustomAlert(
+                    "success",
+                    "Eliminado",
+                    `El asistente ${assistantName} fue eliminado exitosamente.`
+                );
+            } catch (error) {
+                console.error(error);
+                await showCustomAlert(
+                    "error",
+                    "Error",
+                    "Ocurrió un error al eliminar el asistente."
+                );
             }
-        }
+        });
+
+        // ===== VALIDACIÓN EN TIEMPO REAL =====
+        const createNumeroDocumentoAssistant = document.getElementById(
+            "numeroDocumento_assistant"
+        );
+        const createCorreoAssistant =
+            document.getElementById("correo_assistant");
+
+        if (createNumeroDocumentoAssistant)
+            setupAssistantRealTimeValidation(
+                "numeroDocumento",
+                createNumeroDocumentoAssistant
+            );
+        if (createCorreoAssistant)
+            setupAssistantRealTimeValidation("correo", createCorreoAssistant);
+
+        const editNumeroDocumentoAssistant = document.getElementById(
+            "editAssistantNumeroDocumento"
+        );
+        const editCorreoAssistant = document.getElementById(
+            "editAssistantCorreo"
+        );
+
+        if (editNumeroDocumentoAssistant)
+            setupAssistantRealTimeValidation(
+                "numeroDocumento",
+                editNumeroDocumentoAssistant
+            );
+        if (editCorreoAssistant)
+            setupAssistantRealTimeValidation("correo", editCorreoAssistant);
+
+        console.log(
+            "Sistema de alertas para asistentes jurídicos inicializado correctamente"
+        );
     });
 
-    // ===== VALIDACIÓN EN TIEMPO REAL =====
-    const createNumeroDocumentoAssistant = document.getElementById("numeroDocumento_assistant");
-    const createCorreoAssistant = document.getElementById("correo_assistant");
-    
-    if (createNumeroDocumentoAssistant)
-        setupAssistantRealTimeValidation("numeroDocumento", createNumeroDocumentoAssistant);
-    if (createCorreoAssistant) 
-        setupAssistantRealTimeValidation("correo", createCorreoAssistant);
-
-    const editNumeroDocumentoAssistant = document.getElementById("editAssistantNumeroDocumento");
-    const editCorreoAssistant = document.getElementById("editAssistantCorreo");
-    
-    if (editNumeroDocumentoAssistant)
-        setupAssistantRealTimeValidation("numeroDocumento", editNumeroDocumentoAssistant);
-    if (editCorreoAssistant) 
-        setupAssistantRealTimeValidation("correo", editCorreoAssistant);
-
-    console.log("Sistema de alertas para asistentes jurídicos inicializado correctamente");
-});
-
-
-/* ========= Exponer funciones útiles globalmente (si las necesitas) ========= */
-window.showCustomAlert = showCustomAlert;
-window.hideCustomAlert = hideCustomAlert;
-window.handleDuplicateError = handleDuplicateError;
-window.checkForDuplicates = checkForDuplicates;
-window.performSearch = performSearch;
-window.clearSearch = clearSearch;
+    /* ========= Exponer funciones útiles globalmente (si las necesitas) ========= */
+    window.showCustomAlert = showCustomAlert;
+    window.hideCustomAlert = hideCustomAlert;
+    window.handleDuplicateError = handleDuplicateError;
+    window.checkForDuplicates = checkForDuplicates;
+    window.performSearch = performSearch;
+    window.clearSearch = clearSearch;
 }

@@ -155,8 +155,7 @@ Route::middleware(['auth'])->group(function () {
             ->name('conceptos.storeProceso');
     });
 
-    Route::get('/concepto_juridicos/{id}', [ConceptoController::class, 'show'])
-        ->name('concepto.show');
+    
 
     // ===============================================================
     // CONCEPTOS (GENERALES)
@@ -166,6 +165,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/procesos/{proceso}/conceptos', [ConceptoController::class, 'store'])
             ->name('store');
     });
+    Route::get('/concepto_juridicos/{id}', [ConceptoController::class, 'show'])
+        ->name('concepto.show');
+
     // ===============================================================
     // Asistentes (LAWYERS)
     // ===============================================================

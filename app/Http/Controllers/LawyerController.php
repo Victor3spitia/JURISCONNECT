@@ -229,8 +229,8 @@ class LawyerController extends Controller
                 $validated = $request->validate([
                     'nombre' => 'required|string|max:255',
                     'apellido' => 'required|string|max:255',
-                    'tipoDocumento' => 'required|string|max:50',
-                    'numeroDocumento' => 'required|string|max:50|unique:assistants,numero_documento',
+                    'tipo_documento' => 'required|string|max:50',
+                    'numero_documento' => 'required|string|max:50|unique:assistants,numero_documento',
                     'correo' => 'required|email|max:255|unique:assistants,correo|unique:users,email',
                     'telefono' => 'nullable|string|max:20',
                     'lawyers' => 'array',
@@ -241,9 +241,9 @@ class LawyerController extends Controller
                 $user = User::create([
                     'name' => $validated['nombre'] . ' ' . $validated['apellido'],
                     'email' => strtolower($validated['correo']),
-                    'password' => Hash::make($validated['numeroDocumento']),
+                    'password' => Hash::make($validated['numero_documento']),
                     'role_id' => 3, // ASISTENTE
-                    'numero_documento' => $validated['numeroDocumento'],
+                    'numero_documento' => $validated['numero_documento'],
                 ]);
 
                 // Crear asistente
@@ -251,8 +251,8 @@ class LawyerController extends Controller
                     'user_id' => $user->id,
                     'nombre' => $validated['nombre'],
                     'apellido' => $validated['apellido'],
-                    'tipo_documento' => $validated['tipoDocumento'],
-                    'numero_documento' => $validated['numeroDocumento'],
+                    'tipo_documento' => $validated['tipo_documento'],
+                    'numero_documento' => $validated['numero_documento'],
                     'correo' => strtolower($validated['correo']),
                     'telefono' => $validated['telefono'] ?? null,
                 ]);
@@ -264,7 +264,7 @@ class LawyerController extends Controller
 
                 DB::commit();
 
-                $this->sendCredentials($validated['correo'], $user, $validated['numeroDocumento'], $assistant->id);
+                $this->sendCredentials($validated['correo'], $user, $validated['numero_documento'], $assistant->id);
 
                 return $this->successResponse(
                     $request,
@@ -434,13 +434,11 @@ class LawyerController extends Controller
                 'deleted_by' => auth()->email ?? 'unknown'
             ]);
 
-            return $this->successResponse(
-                $request,
-                'Asistente eliminado exitosamente.',
-                [],
-                200,
-                'dashboard'
-            );
+            return response()->json([
+                'success' => true,
+                'message' => 'Asistente eliminado exitosamente.',
+                'assistant_id' => $assistantId,
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -450,11 +448,10 @@ class LawyerController extends Controller
 
             ]);
 
-            return $this->errorResponse(
-                $request,
-                'Error al eliminar asistente',
-                $e->getMessage()
-            );
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar asistente'
+            ], 500);
         }
     }
 

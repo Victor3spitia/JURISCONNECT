@@ -88,71 +88,9 @@
         </div>
     </div>
 
-    <!-- Modal para ver detalles del proceso -->
-    <div id="viewProcessModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Detalles del Proceso</h2>
-                <button class="modal-close" onclick="closeProcessModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div id="processModalBody" class="modal-body">
-                <!-- Contenido cargado dinámicamente -->
-            </div>
-            <div class="modal-footer">
-                <button class="cancel-btn" onclick="closeProcessModal()">Cerrar</button>
-            </div>
-        </div>
-    </div>
 
-    <style>
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
 
-        .modal-content {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            width: 90%;
-        }
 
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .modal-body {
-            padding: 20px;
-        }
-
-        .modal-footer {
-            padding: 15px 20px;
-            border-top: 1px solid #eee;
-            text-align: right;
-        }
-    </style>
 
     <script>
 function closeAlert(alertId) {
@@ -209,42 +147,8 @@ fetch(`${window.location.pathname}?${params.toString()}`, {
     }
 
 // ===== ABRIR Y CERRAR MODAL DE PROCESO =====
-function openProcessModal(id) {
-    document.getElementById('viewProcessModal').style.display = 'flex';
-    const body = document.getElementById('processModalBody');
-    body.innerHTML = '<p>Cargando datos...</p>';
+// Funcionalidad removida - Ahora redirige directamente a la página de detalles
 
-    fetch(`/concepto_juridicos/${id}`)
-        .then(res => {
-            if (!res.ok) throw new Error('No se pudo obtener el concepto');
-            return res.json();
-        })
-        .then(data => {
-            // Ajusta las propiedades según tu modelo (titulo, descripcion, proceso, abogado...)
-            const html = `
-                <p><strong>Título:</strong> ${data.titulo ?? '—'}</p>
-                <p><strong>Descripción:</strong> ${data.descripcion ?? data.concepto ?? '—'}</p>
-                <p><strong>Proceso:</strong> ${data.proceso?.numero_radicado ?? '—'}</p>
-                <p><strong>Abogado:</strong> ${data.abogado?.name ?? '—'}</p>
-            `;
-            body.innerHTML = html;
-        })
-        .catch(() => {
-            body.innerHTML = '<p>Error al cargar los datos.</p>';
-        });
-}
-
-function closeProcessModal() {
-        document.getElementById('viewProcessModal').style.display = 'none';
-    }
-
-//  Cerrar modal con la tecla ESC
-document.addEventListener('keydown', function(event) {
-    const modal = document.getElementById('viewProcessModal');
-    if (event.key === 'Escape' && modal.style.display === 'flex') {
-        closeProcessModal();
-        }
-    });
 
 function confirmDelete(id, nombre) {
     Swal.fire({

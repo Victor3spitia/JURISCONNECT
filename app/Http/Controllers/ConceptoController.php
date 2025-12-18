@@ -198,6 +198,8 @@ public function create(Request $request)
         // Traer concepto con proceso y abogado (ajusta relaciones según tu modelo)
         $concepto = \App\Models\ConceptoJuridico::with(['proceso', 'abogado'])->findOrFail($id);
 
+        return view('legal_processes.conceptos', compact('concepto'));
+
         return response()->json($concepto);
     }
 
@@ -302,3 +304,4 @@ public function create(Request $request)
         }
     }
 }
+

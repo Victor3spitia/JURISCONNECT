@@ -102,7 +102,7 @@
 
                         <div class="form-group">
                             <label for="tipoDocumento_assistant">Tipo de Documento:</label>
-                            <select id="tipoDocumento_assistant" name="tipoDocumento" required>
+                            <select id="tipoDocumento_assistant" name="tipo_documento" required>
                                 <option value="">Seleccione...</option>
                                 <option value="CC">Cédula de Ciudadanía</option>
                                 <option value="CE">Cédula de Extranjería</option>
@@ -112,7 +112,7 @@
 
                         <div class="form-group">
                             <label for="numeroDocumento_assistant">Número de Documento:</label>
-                            <input type="text" id="numeroDocumento_assistant" name="numeroDocumento" required>
+                            <input type="text" id="numeroDocumento_assistant" name="numero_documento" required>
                         </div>
 
                         <div class="form-group">
@@ -241,7 +241,7 @@
 
                         <div class="form-group">
                             <label for="editTipoDocumento">Tipo de Documento:</label>
-                            <select id="editTipoDocumento" name="tipo_documento" required>
+                            <select id="editAssistantTipoDocumento" name="tipo_documento" required>
                                 <option value="">Seleccione...</option>
                                 <option value="CC">Cédula de Ciudadanía</option>
                                 <option value="CE">Cédula de Extranjería</option>
@@ -252,7 +252,7 @@
                         <div class="form-group">
                             <label for="editNumeroDocumento">Número de Documento:</label>
                             <input type="text"
-                                id="editNumeroDocumento"
+                                id="editAssistantNumeroDocumento"
                                 name="numero_documento"
                                 required>
                         </div>

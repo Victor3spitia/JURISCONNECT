@@ -87,10 +87,9 @@
                 </a>
 
                 @forelse($proceso->conceptos ?? [] as $concepto)
-                    <a href="javascript:void(0);" 
-                       onclick="openProcessModal('{{ $concepto->id }}')"
-                       class="action-btn action-view"
-                       title="Ver detalles">
+                    <a href="{{ route('concepto.show', $concepto->id) }}" 
+                        class="action-btn action-view"
+                        title="Ver detalles">
                         <i class="fa-regular fa-eye"></i>
                         Ver Detalles
                     </a>

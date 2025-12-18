@@ -14,8 +14,8 @@
 
                 {{-- Partes Involucradas --}}
                 <h4>Partes Involucradas</h4>
-                <p><strong>Demandante(s):</strong> {{ $proceso->demandante }}</p>
-                <p><strong>Demandado(s):</strong> {{ $proceso->demandado }}</p>
+                <p><strong>Demandante(s):</strong> {{ $concepto->demandante }}</p>
+                <p><strong>Demandado(s):</strong> {{ $concepto->demandado }}</p>
                 <!-- <p><strong>Abogado(s):</strong> {{ $conceptos->abogado ?? 'No registrado' }}</p> -->
 
                 <hr>
@@ -32,8 +32,8 @@
 
                 {{-- Documentos --}}
                 <h4>Documentos</h4>
-                @if($proceso->documento)
-                <a href="{{ asset('storage/' . $proceso->documento) }}" target="_blank" class="btn btn-sm btn-primary">
+                @if($concepto->documento)
+                <a href="{{ asset('storage/' . $concepto->documento) }}" target="_blank" class="btn btn-sm btn-primary">
                     Ver documento adjunto
                 </a>
                 @else
@@ -44,11 +44,11 @@
 
                 {{-- Seguimiento --}}
                 <h4>Seguimiento</h4>
-                <p><strong>Estado actual:</strong> {{ $proceso->estado ?? 'No registrado' }}</p>
-                <p><strong>Observaciones:</strong> {{ $proceso->observaciones ?? 'No registradas' }}</p>
+                <p><strong>Estado actual:</strong> {{ $concepto->estado ?? 'No registrado' }}</p>
+                <p><strong>Observaciones:</strong> {{ $concepto->observaciones ?? 'No registradas' }}</p>
 
                 <div class="mt-4">
-                    <a href="{{ route('procesos.edit', $proceso->id) }}" class="btn btn-warning">Editar</a>
+                    <a href="{{ route('procesos.edit', $concepto->id) }}" class="btn btn-warning">Editar</a>
                     <a href="{{ route('procesos.index') }}" class="btn btn-secondary">Volver al listado</a>
                 </div>
             </div>

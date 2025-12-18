@@ -4,10 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Listado de Asistentes</title>
+
     <style>
         body {
-            font-family: sans-serif;
+            font-family: DejaVu Sans, sans-serif;
         }
+
+        /* ===== MARCA DE AGUA ===== */
+        .watermark {
+            position: fixed;
+            top: 45%;
+            /* baja un poco */
+            left:45%;
+            width: 400px;
+            /* tamaño controlado */
+            opacity: 0.07;
+            /* bien clarita */
+            transform: translate(-50%, -50%);
+            z-index: -1;
+        }
+
+
 
         h2 {
             text-align: center;
@@ -30,13 +47,20 @@
 </head>
 
 <body>
+
+    <!-- MARCA DE AGUA -->
+    <img src="{{ public_path('img/LogoInsti.png') }}" class="watermark">
+
+
     <h2>Listado de Asistentes</h2>
+
     <table>
         <thead>
             <tr>
-                <th>id</th>
-                <th>nombre</th>
+                <th>Nombre</th>
                 <th>Apellido</th>
+                <th>Tipo Doc</th>
+                <th>N° Documento</th>
                 <th>Correo</th>
                 <th>Teléfono</th>
             </tr>
@@ -44,16 +68,17 @@
         <tbody>
             @foreach($assistants as $assistant)
             <tr>
-                <td>{{ $assistant->id }}</td>
                 <td>{{ $assistant->nombre }}</td>
                 <td>{{ $assistant->apellido }}</td>
+                <td>{{ $assistant->tipo_documento }}</td>
+                <td>{{ $assistant->numero_documento }}</td>
                 <td>{{ $assistant->correo }}</td>
                 <td>{{ $assistant->telefono }}</td>
-                <td>{{ $assistant->tipo_documento }}</td>
             </tr>
             @endforeach
         </tbody>
     </table>
+
 </body>
 
 </html>
