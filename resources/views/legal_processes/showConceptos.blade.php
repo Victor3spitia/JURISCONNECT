@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 
-<head><!-- pagina para ver que procesos tiene pendiente para concepto  -->
+    <!-- pagina para ver que procesos tiene pendiente para concepto  -->
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Procesos Pendientes - CSS Puro</title>

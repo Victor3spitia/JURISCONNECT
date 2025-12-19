@@ -10,8 +10,9 @@
                 <h2 class="titulo-proceso" data-numero="{{ $loop->iteration }}">
                     Proceso Legal {{ $loop->iteration }}
                     <span class="abogado-nombre">
-                        – Abogado: {{ $proceso->lawyer->user->name ?? 'Sin asignar' }}
+                        – Abogado: {{ auth()->user()->name ?? 'Sin asignar' }}
                     </span>
+                    
                 </h2>
 
             </div>
@@ -86,16 +87,20 @@
                     Redactar Concepto Jurídico
                 </a>
 
-                @forelse($proceso->conceptos ?? [] as $concepto)
-                    <a href="{{ route('concepto.show', $concepto->id) }}" 
-                        class="action-btn action-view"
-                        title="Ver detalles">
+                @php
+                    $conceptosColeccion = collect($proceso->conceptos ?? []);
+                @endphp
+
+                @if($conceptosColeccion->isNotEmpty())
+                    <a href="{{ route('procesos.conceptos', $proceso->id) }}"
+                       class="action-btn action-view"
+                       title="Ver detalles de conceptos">
                         <i class="fa-regular fa-eye"></i>
-                        Ver Detalles
+                        Ver Detalles @if($conceptosColeccion->count() > 1) ({{ $conceptosColeccion->count() }}) @endif
                     </a>
-                @empty
+                @else
                     <p class="text-muted small mb-0">No hay conceptos jurídicos aún</p>
-                @endforelse
+                @endif
             </div>
         </div>
     </div>

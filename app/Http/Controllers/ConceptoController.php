@@ -203,6 +203,18 @@ public function create(Request $request)
         return response()->json($concepto);
     }
 
+    /**
+     * Listar todos los conceptos asociados a un proceso
+     */
+    public function listByProceso($procesoId)
+    {
+        $proceso = Proceso::findOrFail($procesoId);
+
+        $conceptos = ConceptoJuridico::with(['abogado'])->where('proceso_id', $procesoId)->get();
+
+        return view('legal_processes.conceptos', compact('proceso', 'conceptos'));
+    }
+
     // ===============================
     // MÉTODOS PRIVADOS DE APOYO
     // ===============================

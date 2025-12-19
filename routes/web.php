@@ -168,6 +168,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/concepto_juridicos/{id}', [ConceptoController::class, 'show'])
         ->name('concepto.show');
 
+    // Listar conceptos por proceso (vista de lista)
+    Route::get('/procesos/{proceso}/conceptos', [ConceptoController::class, 'listByProceso'])
+        ->name('procesos.conceptos');
+
     // ===============================================================
     // Asistentes (LAWYERS)
     // ===============================================================
