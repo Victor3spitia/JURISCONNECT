@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ConceptoJuridico extends Model
 {
     protected $fillable = [
+        'id',
         'titulo',
         'categoria', 
         'descripcion',
@@ -31,7 +32,7 @@ class ConceptoJuridico extends Model
     // Relación con el abogado (usuario)
     public function abogado(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'lawyer_id');
+        return $this->belongsTo(User::class, 'abogado_id');
     }
 
     // Relación con el proceso

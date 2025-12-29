@@ -9,13 +9,10 @@
     <link rel="stylesheet" href="{{ asset('css/abogado.css') }}">
 
     <div class="dashboard-wrapper">
-
         <div class="overlay" id="overlay"></div>
-
         <!-- ===== SIDEBAR ===== -->
         <aside class="sidebar" id="sidebar">
             <div class="profile">
-
                 <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png" style="display: none;">
 
                 <div id="loadingIndicator" 
@@ -95,7 +92,6 @@
 
             <!-- ===== CARDS ===== -->
             <div class="cards-container">
-
                 <!-- Registrar Proceso (solo abogado) -->
                 <div class="dashboard-card">
                     <div class="card-icon">⚖️</div>
@@ -124,10 +120,8 @@
                     <p>Gestiona conceptos jurídicos de manera organizada.</p>
                     <a href="{{ route('conceptos.create') }}">Ver Conceptos</a>
                 </div>
-
             </div>
         </main>
-
     </div>
 
 </x-app-layout>

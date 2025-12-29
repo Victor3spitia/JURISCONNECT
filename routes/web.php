@@ -10,6 +10,7 @@ use App\Http\Controllers\LegalProcessController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ConceptoController;
 use App\Http\Controllers\ProcesoReportController;
+use App\Http\Controllers\PagosController;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\AssistantExport;
 
@@ -49,6 +50,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard/asistente', [AsistenteController::class, 'index'])
         ->name('dashboard.asistente');
+
+    Route::get('/dashboard/metodos-pago', [PagosController::class, 'index'])
+        ->name('dashboard.metodos-pago');
 
     // ===============================================================
     // PERFIL
@@ -153,6 +157,8 @@ Route::middleware(['auth'])->group(function () {
 
         Route::post('/procesos/{id}/conceptos', [ConceptoController::class, 'storeProceso'])
             ->name('conceptos.storeProceso');
+        
+        
     });
 
     
@@ -164,6 +170,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create', [ConceptoController::class, 'create'])->name('create');
         Route::post('/procesos/{proceso}/conceptos', [ConceptoController::class, 'store'])
             ->name('store');
+        Route::delete('/conceptos/{id}', [ConceptoController::class, 'destroy'])
+            ->name('destroy');
     });
     Route::get('/concepto_juridicos/{id}', [ConceptoController::class, 'show'])
         ->name('concepto.show');

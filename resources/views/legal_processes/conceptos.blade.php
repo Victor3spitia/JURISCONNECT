@@ -53,8 +53,22 @@
                             <p>{{ \Illuminate\Support\Str::limit($c->descripcion ?? $c->concepto ?? '', 300) }}</p>
                             <div class="concept-actions">
                                 <a href="{{ route('concepto.show', $c->id) }}" class="action-btn">Ver detalle</a>
-                                <a href="{{ route('procesos.edit', $proceso->id) }}" class="action-btn" style="background:linear-gradient(135deg,#f59e0b 0%,#f97316 100%)">Editar proceso</a>
-                            </div>
+
+                            <form action="{{ route('conceptos.destroy', $c->id) }}"
+                                method="POST"
+                                class="form-delete-proceso"
+                                onsubmit="return confirm('¿Estás seguro de que deseas eliminar este concepto jurídico? Esta acción no se puede deshacer.');">
+                                @csrf
+                                @method('DELETE')
+
+                                <button type="submit" class="action-delete" title="Eliminar">
+                                    <svg class="action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </form>
+ </div>
                         </div>
                     @endforeach
                 </div>

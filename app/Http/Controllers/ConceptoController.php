@@ -204,6 +204,22 @@ public function create(Request $request)
     }
 
     /**
+     * Eliminar concepto específico
+     */
+    public function destroy($id)
+    {
+        $concepto = ConceptoJuridico::findOrFail($id);
+        
+        // Verificar que el usuario sea el propietario o un admin
+        if ($concepto->abogado_id !== Auth::id() && Auth::user()->role_id != 1) {
+            abort(403, 'No tienes permiso para eliminar este concepto.');
+        }
+        
+        $concepto->delete();
+        return redirect()->back()->with('success', 'Concepto jurídico eliminado correctamente.');
+    }
+
+    /**
      * Listar todos los conceptos asociados a un proceso
      */
     public function listByProceso($procesoId)

@@ -317,6 +317,7 @@
             </div>
 
             <div class="nav-menu">
+
                 <button class="nav-btn active" data-section="dashboard">
                     Dashboard
                 </button>
@@ -328,6 +329,11 @@
                 <button class="nav-btn" data-section="assistants">
                     Gestión de Asistentes
                 </button>
+
+                <a href="{{ route('dashboard.metodos-pago') }}" >
+                    Métodos de Pago
+                </a>
+
             </div>
 
             <div class="sena-logo">
@@ -356,7 +362,6 @@
             </div>
 
             <div class="content-panel">
-
                 <!-- SECCIÓN DASHBOARD PRINCIPAL -->
                 <div class="section-content active" id="dashboard-section">
                     <div class="section-header">
@@ -445,16 +450,11 @@
                     <div id="AbogadosTableWrapper">
                         @include('profile.partials.lawyers-table', ['lawyers' => $lawyers])
                     </div>
-
-
                 </div>
-
             </div>
 
         </div>
     </div>
     </div>
-
-
 
 </x-app-layout>

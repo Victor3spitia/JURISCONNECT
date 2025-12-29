@@ -323,6 +323,27 @@
             cursor: pointer;
         }
 
+        .action-delete {
+    color: #ffffff; /* Rojo */
+    border: none;
+    background: #dc3545;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+.action-delete:hover {
+    background: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.action-icon {
+    width: 20px;
+    height: 20px;
+}
+
         .action-btn:hover {
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             transform: translateY(-1px);
